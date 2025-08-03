@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중고마켓 - 싱가포르 한인 커뮤니티</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #ee2733;
+            --secondary-color: #1e3a8a;
+            --accent-color: #ffd700;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --bg-light: #f8f9fa;
+            --border-color: #e0e0e0;
+            --success-color: #10b981;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+        }
+
+        /* 헤더 */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 2rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: var(--text-dark);
+        }
+
+        /* 필터 & 검색 */
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 3rem;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .category-filter {
+            padding: 0.8rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-filter:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* 제품 그리드 */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--bg-light);
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* 추가 버튼 */
+        .add-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            border: none;
+            z-index: 999;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 600px;
+            margin: 2rem auto;
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            color: var(--text-dark);
+        }
+
+        .close-button {
+            font-size: 2rem;
+            color: var(--text-light);
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover {
+            color: var(--primary-color);
+        }
+
+        /* 폼 스타일 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* 이미지 업로드 */
+        .image-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+        }
+
+        .image-upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(238, 39, 51, 0.05);
+        }
+
+        .image-upload-area.has-image {
+            padding: 0;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .uploaded-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--text-light);
+        }
+
+        /* 버튼 */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(238, 39, 51, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 5rem 1rem 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 1rem;
+            }
+
+            .modal-content {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .add-button {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header>
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🦁</div>
+                <span>SG한인 중고마켓</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">중고마켓</h1>
+        </div>
+
+        <!-- 필터 섹션 -->
+        <div class="filter-section">
+            <div class="search-box">
+                <input type="text" placeholder="찾으시는 물건을 검색해보세요" id="searchInput">
+            </div>
+            <select class="category-filter" id="categoryFilter">
+                <option value="">전체 카테고리</option>
+                <option value="electronics">전자제품</option>
+                <option value="furniture">가구</option>
+                <option value="clothing">의류</option>
+                <option value="baby">유아용품</option>
+                <option value="books">도서</option>
+                <option value="etc">기타</option>
+            </select>
+        </div>
+
+        <!-- 제품 그리드 -->
+        <div class="products-grid" id="productsGrid">
+            <!-- 제품이 여기에 동적으로 추가됩니다 -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📦</div>
+                <h3>아직 등록된 제품이 없습니다</h3>
+                <p>첫 번째 제품을 등록해보세요!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 추가 버튼 -->
+    <button class="add-button" onclick="openModal()">+</button>
+
+    <!-- 제품 등록 모달 -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">제품 등록하기</h2>
+                <button class="close-button" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="productForm">
+                <div class="form-group">
+                    <label class="form-label">제품 사진</label>
+                    <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">
+                        <div class="upload-icon">📷</div>
+                        <p class="upload-text">클릭하여 사진을 업로드하세요</p>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">제품명</label>
+                    <input type="text" class="form-input" id="productTitle" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">가격 (SGD)</label>
+                    <input type="number" class="form-input" id="productPrice" placeholder="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">카테고리</label>
+                    <select class="form-select" id="productCategory" required>
+                        <option value="">카테고리 선택</option>
+                        <option value="electronics">전자제품</option>
+                        <option value="furniture">가구</option>
+                        <option value="clothing">의류</option>
+                        <option value="baby">유아용품</option>
+                        <option value="books">도서</option>
+                        <option value="etc">기타</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">상세 설명</label>
+                    <textarea class="form-textarea" id="productDescription" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">거래 지역</label>
+                    <input type="text" class="form-input" id="productLocation" placeholder="예: Orchard, Tampines">
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">등록하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 제품 데이터 저장 (실제로는 서버에 저장해야 함)
+        let products = [];
+        let uploadedImage = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProducts();
+        });
+
+        // 제품 렌더링
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (products.length === 0) {
+                grid.innerHTML = emptyState.outerHTML;
+                return;
+            }
+
+            grid.innerHTML = products.map((product, index) => `
+                <div class="product-card" onclick="viewProduct(${index})">
+                    <img src="${product.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
+                         alt="${product.title}" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-title">${product.title}</h3>
+                        <p class="product-price">S$${product.price}</p>
+                        <div class="product-meta">
+                            <span>📍 ${product.location || '위치 미정'}</span>
+                            <span>${formatDate(product.date)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 모달 열기
+        function openModal() {
+            document.getElementById('productModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            resetForm();
+        }
+
+        // 폼 리셋
+        function resetForm() {
+            document.getElementById('productForm').reset();
+            uploadedImage = null;
+            const uploadArea = document.getElementById('imageUploadArea');
+            uploadArea.classList.remove('has-image');
+            uploadArea.innerHTML = `
+                <div class="upload-icon">📷</div>
+                <p class="upload-text">클릭하여 사진을 업로드하세요</p>
+            `;
+        }
+
+        // 이미지 업로드 처리
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImage = e.target.result;
+                    const uploadArea = document.getElementById('imageUploadArea');
+                    uploadArea.classList.add('has-image');
+                    uploadArea.innerHTML = `<img src="${e.target.result}" class="uploaded-image" alt="Uploaded">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 폼 제출 처리
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newProduct = {
+                title: document.getElementById('productTitle').value,
+                price: document.getElementById('productPrice').value,
+                category: document.getElementById('productCategory').value,
+                description: document.getElementById('productDescription').value,
+                location: document.getElementById('productLocation').value,
+                image: uploadedImage,
+                date: new Date()
+            };
+
+            products.unshift(newProduct); // 최신 제품을 앞에 추가
+            renderProducts();
+            closeModal();
+            
+            // 성공 메시지
+            showNotification('제품이 성공적으로 등록되었습니다!');
+        });
+
+        // 제품 상세 보기
+        function viewProduct(index) {
+            const product = products[index];
+            alert(`제품명: ${product.title}\n가격: S$${product.price}\n설명: ${product.description}\n위치: ${product.location || '위치 미정'}`);
+        }
+
+        // 날짜 포맷
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return `${minutes}분 전`;
+            if (hours < 24) return `${hours}시간 전`;
+            if (days < 7) return `${days}일 전`;
+            
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        // 알림 표시
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 1002;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('productModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // 검색 기능
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filterProducts();
+        });
+
+        // 카테고리 필터
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            filterProducts();
+        });
+
+        // 제품 필터링
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+
+            const filtered = products.filter(product => {
+                const matchesSearch = product.title.toLowerCase().includes(searchTerm) || 
+                                    product.description.toLowerCase().includes(searchTerm);
+                const matchesCategory = !category || product.category === category;
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('productsGrid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h3>검색 결과가 없습니다</h3>
+                        <p>다른 검색어를 시도해보세요</p>
+                    </div>
+                `;
+            } else {
+                // 필터된 제품만 표시
+                const grid = document.getElementById('productsGrid');
+                grid.innerHTML = filtered.map((product, index) => {
+                    const originalIndex = products.indexOf(product);
+                    return `
+                        <div class="product-card" onclick="viewProduct(${originalIndex})">
+                            <img src="${product.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
+                                 alt="${product.title}" class="product-image">
+                            <div class="product-info">
+                                <h3 class="product-title">${product.title}</h3>
+                                <p class="product-price">S$${product.price}</p>
+                                <div class="product-meta">
+                                    <span>📍 ${product.location || '위치 미정'}</span>
+                                    <span>${formatDate(product.date)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    </script>
+</body>
+</html>

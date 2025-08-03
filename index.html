@@ -521,7 +521,7 @@
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>고객 지원</h4>
+                <h4>고객 지원 안해요</h4>
                 <ul>
                     <li><a href="#">자주 묻는 질문</a></li>
                     <li><a href="#">이용약관</a></li>
@@ -530,7 +530,7 @@
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>연락처</h4>
+                <h4>연락처 가짜예요</h4>
                 <ul>
                     <li>📧 sgkorean@example.com</li>
                     <li>📱 +65 1234 5678</li>
@@ -544,7 +544,7 @@
             </div>
         </div>
         <div class="copyright">
-            <p>&copy; 2024 SG한인커뮤니티. All rights reserved.</p>
+            <p>&copy; 2023 매버릭스 코리아. All rights reserved.</p>
         </div>
     </footer>
 
@@ -589,8 +589,11 @@
         // 카테고리 카드 클릭 이벤트
         document.querySelectorAll('.category-card').forEach(card => {
             card.addEventListener('click', function() {
-                const category = this.querySelector('h3').textContent;
-                alert(`${category} 페이지로 이동합니다!`);
+                const category = this.querySelector('h3').textContent.trim();
+
+                // 카테고리 이름을 파일명으로 변환해 이동 (예: "Sports" → "sports.html")
+                const filename = category.toLowerCase().replace(/\s+/g, '-') + '.html';
+                window.location.href = filename;
             });
         });
 
