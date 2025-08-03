@@ -112,211 +112,316 @@
         </div>
     </div>
 
-    <script>
-        // 제품 데이터 저장 (실제로는 서버에 저장해야 함)
-        let products = [];
-        let uploadedImage = null;
+    <!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            renderProducts();
+<script>
+    /** ================================
+     *  Supabase 초기화 (본인 프로젝트 값으로 교체)
+     *  ================================= */
+    const SUPABASE_URL = 'https://thwnzvrhaenmcjjfmopn.supabase.co';      // ← 본인 프로젝트 URL
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRod256dnJoYWVubWNqamZtb3BuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxOTY3ODYsImV4cCI6MjA2OTc3Mjc4Nn0.3pXQdSkLMk02xembZWfiROtIR6ETijinnIRA65WCY5Q';                  // ← 본인 anon public key
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /** ================================
+     *  상태값: 제품 배열 / 업로드 파일
+     *  ================================= */
+    let products = [];               // 서버에서 읽어온 목록을 여기에 보관
+    let uploadedImageFile = null;    // <input type="file">에서 받은 실제 파일
+    let uploadedImagePreview = null; // 미리보기용 dataURL (선택)
+
+    /** ================================
+     *  페이지 로드 시: 데이터 불러와 렌더
+     *  ================================= */
+    document.addEventListener('DOMContentLoaded', async function() {
+    await loadProducts();
+    renderProducts();
+    });
+
+    /** ================================
+     *  제품 목록 불러오기 (Supabase SELECT)
+     *  ================================= */
+    async function loadProducts() {
+    const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Failed to load products:', error);
+        showNotification('제품 불러오기에 실패했어요.');
+        return;
+    }
+    products = data || [];
+    }
+
+    /** ================================
+     *  렌더링 (기존 로직 유지)
+     *  ================================= */
+    function renderProducts() {
+    const grid = document.getElementById('productsGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    if (!products || products.length === 0) {
+        grid.innerHTML = emptyState.outerHTML;
+        return;
+    }
+
+    grid.innerHTML = products.map((product, index) => `
+        <div class="product-card" onclick="viewProduct(${index})">
+        <img src="${product.image_url || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
+            alt="${escapeHtml(product.title)}" class="product-image">
+        <div class="product-info">
+            <h3 class="product-title">${escapeHtml(product.title)}</h3>
+            <p class="product-price">S$${product.price}</p>
+            <div class="product-meta">
+            <span>📍 ${escapeHtml(product.location || '위치 미정')}</span>
+            <span>${formatDate(new Date(product.created_at))}</span>
+            </div>
+        </div>
+        </div>
+    `).join('');
+    }
+
+    /** ================================
+     *  모달 열고 닫기 / 폼 리셋 (기존)
+     *  ================================= */
+    function openModal() {
+    document.getElementById('productModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+    document.getElementById('productModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    resetForm();
+    }
+    function resetForm() {
+    document.getElementById('productForm').reset();
+    uploadedImageFile = null;
+    uploadedImagePreview = null;
+    const uploadArea = document.getElementById('imageUploadArea');
+    uploadArea.classList.remove('has-image');
+    uploadArea.innerHTML = `
+        <div class="upload-icon">📷</div>
+        <p class="upload-text">클릭하여 사진을 업로드하세요</p>
+    `;
+    }
+
+    /** ================================
+     *  이미지 업로드 (미리보기 + 파일 보관)
+     *  ================================= */
+    function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        uploadedImageFile = file;
+
+        // 미리보기
+        const reader = new FileReader();
+        reader.onload = function(e) {
+        uploadedImagePreview = e.target.result;
+        const uploadArea = document.getElementById('imageUploadArea');
+        uploadArea.classList.add('has-image');
+        uploadArea.innerHTML = `<img src="${uploadedImagePreview}" class="uploaded-image" alt="Uploaded">`;
+        };
+        reader.readAsDataURL(file);
+    }
+    }
+
+    /** ================================
+     *  폼 제출: Storage 업로드 → DB INSERT
+     *  ================================= */
+    document.getElementById('productForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    // 1) 입력값 수집
+    const title = document.getElementById('productTitle').value.trim();
+    const price = parseFloat(document.getElementById('productPrice').value);
+    const category = document.getElementById('productCategory').value;
+    const description = document.getElementById('productDescription').value.trim();
+    const location = document.getElementById('productLocation').value.trim();
+
+    // 간단 검증
+    if (!title || isNaN(price)) {
+        showNotification('제목과 가격을 확인해 주세요.');
+        return;
+    }
+
+    // 2) 이미지가 있으면 Storage에 업로드하고 공개 URL 확보
+    let imageUrl = null;
+    if (uploadedImageFile) {
+        const path = `products/${Date.now()}_${sanitizeFileName(uploadedImageFile.name)}`;
+        const { data: uploadData, error: uploadError } = await supabaseClient
+        .storage.from('product-images')
+        .upload(path, uploadedImageFile, {
+            cacheControl: '3600',
+            upsert: false
         });
 
-        // 제품 렌더링
-        function renderProducts() {
-            const grid = document.getElementById('productsGrid');
-            const emptyState = document.getElementById('emptyState');
-            
-            if (products.length === 0) {
-                grid.innerHTML = emptyState.outerHTML;
-                return;
-            }
+        if (uploadError) {
+        console.error('Upload failed:', uploadError);
+        showNotification('이미지 업로드에 실패했습니다.');
+        return;
+        }
 
-            grid.innerHTML = products.map((product, index) => `
-                <div class="product-card" onclick="viewProduct(${index})">
-                    <img src="${product.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
-                         alt="${product.title}" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-title">${product.title}</h3>
-                        <p class="product-price">S$${product.price}</p>
-                        <div class="product-meta">
-                            <span>📍 ${product.location || '위치 미정'}</span>
-                            <span>${formatDate(product.date)}</span>
-                        </div>
-                    </div>
+        // 공개 URL 만들기
+        const { data: publicData } = supabaseClient
+        .storage.from('product-images')
+        .getPublicUrl(uploadData.path);
+
+        imageUrl = publicData?.publicUrl || null;
+    }
+
+    // 3) DB에 제품 INSERT
+    const { data, error } = await supabaseClient
+        .from('products')
+        .insert([{
+        title,
+        price,
+        category,
+        description,
+        location,
+        image_url: imageUrl
+        // created_at은 default now()
+        }])
+        .select(); // 방금 추가한 행 반환
+
+    if (error) {
+        console.error('Insert failed:', error);
+        showNotification('제품 등록에 실패했습니다.');
+        return;
+    }
+
+    // 4) 로컬 상태 갱신 → 렌더
+    if (data && data.length > 0) {
+        products.unshift(data[0]); // 최신이 위로 오도록
+    } else {
+        // 또는 리스트를 다시 불러오는 방법
+        await loadProducts();
+    }
+
+    renderProducts();
+    closeModal();
+    showNotification('제품이 성공적으로 등록되었습니다!');
+    });
+
+    /** ================================
+     *  상세 보기 (기존 로직 유지, 필드명만 맞춤)
+     *  ================================= */
+    function viewProduct(index) {
+    const product = products[index];
+    alert(
+        `제품명: ${product.title}\n` +
+        `가격: S$${product.price}\n` +
+        `설명: ${product.description || ''}\n` +
+        `위치: ${product.location || '위치 미정'}`
+    );
+    }
+
+    /** ================================
+     *  검색/필터 (기존 로직 유지, image_url/created_at 사용)
+     *  ================================= */
+    document.getElementById('searchInput').addEventListener('input', function() {
+    filterProducts();
+    });
+    document.getElementById('categoryFilter').addEventListener('change', function() {
+    filterProducts();
+    });
+
+    function filterProducts() {
+    const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+
+    const filtered = (products || []).filter(product => {
+        const title = (product.title || '').toLowerCase();
+        const desc = (product.description || '').toLowerCase();
+        const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+        const matchesCategory = !category || product.category === category;
+        return matchesSearch && matchesCategory;
+    });
+
+    const grid = document.getElementById('productsGrid');
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>검색 결과가 없습니다</h3>
+            <p>다른 검색어를 시도해보세요</p>
+        </div>
+        `;
+    } else {
+        grid.innerHTML = filtered.map((product, index) => {
+        // 현재 배열에서 index 매핑
+        const originalIndex = products.indexOf(product);
+        return `
+            <div class="product-card" onclick="viewProduct(${originalIndex})">
+            <img src="${product.image_url || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
+                alt="${escapeHtml(product.title)}" class="product-image">
+            <div class="product-info">
+                <h3 class="product-title">${escapeHtml(product.title)}</h3>
+                <p class="product-price">S$${product.price}</p>
+                <div class="product-meta">
+                <span>📍 ${escapeHtml(product.location || '위치 미정')}</span>
+                <span>${formatDate(new Date(product.created_at))}</span>
                 </div>
-            `).join('');
-        }
+            </div>
+            </div>
+        `;
+        }).join('');
+    }
+    }
 
-        // 모달 열기
-        function openModal() {
-            document.getElementById('productModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
+    /** ================================
+     *  유틸: 날짜 / 알림 / 안전 처리
+     *  ================================= */
+    function formatDate(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+    if (hours < 24) return `${hours}시간 전`;
+    if (days < 7) return `${days}일 전`;
+    return date.toLocaleDateString('ko-KR');
+    }
 
-        // 모달 닫기
-        function closeModal() {
-            document.getElementById('productModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-            resetForm();
-        }
+    function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px;
+        background: var(--success-color, #16a34a);
+        color: white; padding: 1rem 2rem; border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1002;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+    }
 
-        // 폼 리셋
-        function resetForm() {
-            document.getElementById('productForm').reset();
-            uploadedImage = null;
-            const uploadArea = document.getElementById('imageUploadArea');
-            uploadArea.classList.remove('has-image');
-            uploadArea.innerHTML = `
-                <div class="upload-icon">📷</div>
-                <p class="upload-text">클릭하여 사진을 업로드하세요</p>
-            `;
-        }
+    // 모달 외부 클릭 시 닫기 (기존)
+    window.onclick = function(event) {
+    const modal = document.getElementById('productModal');
+    if (event.target == modal) closeModal();
+    }
 
-        // 이미지 업로드 처리
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImage = e.target.result;
-                    const uploadArea = document.getElementById('imageUploadArea');
-                    uploadArea.classList.add('has-image');
-                    uploadArea.innerHTML = `<img src="${e.target.result}" class="uploaded-image" alt="Uploaded">`;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    // HTML 이스케이프(간단 XSS 방지)
+    function escapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
-        // 폼 제출 처리
-        document.getElementById('productForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const newProduct = {
-                title: document.getElementById('productTitle').value,
-                price: document.getElementById('productPrice').value,
-                category: document.getElementById('productCategory').value,
-                description: document.getElementById('productDescription').value,
-                location: document.getElementById('productLocation').value,
-                image: uploadedImage,
-                date: new Date()
-            };
+    // 파일명 안전화
+    function sanitizeFileName(name) {
+    return name.replace(/[^\w.\-]+/g, '_');
+    }
+</script>
 
-            products.unshift(newProduct); // 최신 제품을 앞에 추가
-            renderProducts();
-            closeModal();
-            
-            // 성공 메시지
-            showNotification('제품이 성공적으로 등록되었습니다!');
-        });
-
-        // 제품 상세 보기
-        function viewProduct(index) {
-            const product = products[index];
-            alert(`제품명: ${product.title}\n가격: S$${product.price}\n설명: ${product.description}\n위치: ${product.location || '위치 미정'}`);
-        }
-
-        // 날짜 포맷
-        function formatDate(date) {
-            const now = new Date();
-            const diff = now - date;
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(diff / 3600000);
-            const days = Math.floor(diff / 86400000);
-
-            if (minutes < 1) return '방금 전';
-            if (minutes < 60) return `${minutes}분 전`;
-            if (hours < 24) return `${hours}시간 전`;
-            if (days < 7) return `${days}일 전`;
-            
-            return date.toLocaleDateString('ko-KR');
-        }
-
-        // 알림 표시
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--success-color);
-                color: white;
-                padding: 1rem 2rem;
-                border-radius: 10px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                z-index: 1002;
-                animation: slideIn 0.3s ease;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // 모달 외부 클릭 시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('productModal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
-
-        // 검색 기능
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            filterProducts();
-        });
-
-        // 카테고리 필터
-        document.getElementById('categoryFilter').addEventListener('change', function() {
-            filterProducts();
-        });
-
-        // 제품 필터링
-        function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const category = document.getElementById('categoryFilter').value;
-
-            const filtered = products.filter(product => {
-                const matchesSearch = product.title.toLowerCase().includes(searchTerm) || 
-                                    product.description.toLowerCase().includes(searchTerm);
-                const matchesCategory = !category || product.category === category;
-                return matchesSearch && matchesCategory;
-            });
-
-            if (filtered.length === 0) {
-                document.getElementById('productsGrid').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🔍</div>
-                        <h3>검색 결과가 없습니다</h3>
-                        <p>다른 검색어를 시도해보세요</p>
-                    </div>
-                `;
-            } else {
-                // 필터된 제품만 표시
-                const grid = document.getElementById('productsGrid');
-                grid.innerHTML = filtered.map((product, index) => {
-                    const originalIndex = products.indexOf(product);
-                    return `
-                        <div class="product-card" onclick="viewProduct(${originalIndex})">
-                            <img src="${product.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"><rect fill="%23f0f0f0" width="400" height="200"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="20">No Image</text></svg>'}" 
-                                 alt="${product.title}" class="product-image">
-                            <div class="product-info">
-                                <h3 class="product-title">${product.title}</h3>
-                                <p class="product-price">S$${product.price}</p>
-                                <div class="product-meta">
-                                    <span>📍 ${product.location || '위치 미정'}</span>
-                                    <span>${formatDate(product.date)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-        }
-    </script>
 </body>
 </html>
