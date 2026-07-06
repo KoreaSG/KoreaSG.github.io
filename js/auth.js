@@ -167,8 +167,8 @@ async function signupUser(username, password, region) {
   if (!USERNAME_RE.test(username)) {
     throw new Error("아이디는 영문 소문자/숫자/_ 3~20자입니다.");
   }
-  if (password.length < 6) {
-    throw new Error("비밀번호는 6자 이상이어야 합니다.");
+  if (password.length < 10) {
+    throw new Error("비밀번호는 10자 이상이어야 합니다.");
   }
   if (!region || REGIONS.indexOf(region) === -1) {
     throw new Error("지역을 선택해주세요.");

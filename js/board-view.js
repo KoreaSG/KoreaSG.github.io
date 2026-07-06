@@ -263,7 +263,7 @@
     var notice = document.createElement("p");
     notice.className = "comment-login-notice";
     notice.innerHTML =
-      '댓글을 작성하려면 <a href="login.html?next=' + next + '">로그인</a>이 필요합니다.';
+      '댓글을 작성하려면 <a href="login.html?next=' + escapeHtml(next) + '">로그인</a>이 필요합니다.';
     commentForm.replaceWith(notice);
   }
 
