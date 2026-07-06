@@ -61,11 +61,28 @@
       }
       currentItem = res.data;
       renderItem(currentItem);
+      trackView();
       commentsSection.hidden = false;
       loadComments();
     } catch (err) {
       showToast(mapRpcError(err), "error");
       renderNotFound();
+    }
+  }
+
+  // 조회수 증가 — 세션당 1회, 실패해도 무시 (fire-and-forget)
+  function trackView() {
+    var key = "viewed_item_" + itemId;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch (e) {
+      // sessionStorage 사용 불가 환경 — 그냥 1회 호출
+    }
+    try {
+      sb.rpc("increment_view", { p_kind: "item", p_id: itemId }).then(null, function () {});
+    } catch (e) {
+      // 절대 페이지를 막지 않음
     }
   }
 
@@ -97,6 +114,9 @@
     var sellerHtml =
       "판매자: " + escapeHtml(item.seller_username || "알수없음") +
       (item.seller_region ? " (" + escapeHtml(item.seller_region) + ")" : "");
+    if (!item.is_mine) {
+      sellerHtml += ' <button type="button" id="message-seller-btn" class="btn btn-sm">판매자에게 쪽지</button>';
+    }
 
     var profile = getProfile();
     var canEdit = !!item.is_mine;
@@ -118,6 +138,8 @@
           "<span>" + escapeHtml(item.category) + "</span>" +
           "<span>·</span>" +
           "<span>" + escapeHtml(formatDate(item.created_at)) + "</span>" +
+          "<span>·</span>" +
+          "<span>조회 " + (Number(item.view_count) || 0) + "</span>" +
         "</div>" +
         '<div class="item-desc">' + escapeHtml(item.description) + "</div>" +
         '<div class="item-actions">' + actionsHtml + "</div>" +
@@ -141,6 +163,18 @@
     var deleteBtn = document.getElementById("delete-btn");
     if (editBtn) editBtn.addEventListener("click", onEdit);
     if (deleteBtn) deleteBtn.addEventListener("click", onDelete);
+
+    var messageBtn = document.getElementById("message-seller-btn");
+    if (messageBtn) {
+      messageBtn.addEventListener("click", function () {
+        if (!getProfile()) {
+          var next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = "login.html?next=" + next;
+          return;
+        }
+        openMessageModal({ itemId: itemId, title: item.title });
+      });
+    }
   }
 
   function onEdit() {

@@ -21,6 +21,7 @@
 
   loadRecentItems();
   loadRecentPosts();
+  loadPopularPosts();
 
   async function loadRecentItems() {
     if (!itemsEl) return;
@@ -59,6 +60,45 @@
       itemsEl.innerHTML = html;
     } catch (err) {
       itemsEl.innerHTML = '<div class="empty-state">' + escapeHtml(mapRpcError(err)) + "</div>";
+    }
+  }
+
+  // 인기 글 TOP 5 (최근 7일 좋아요 기준) — 없으면 섹션 자체를 숨김 유지
+  async function loadPopularPosts() {
+    var sectionEl = document.getElementById("popular-posts-section");
+    var listEl = document.getElementById("popular-posts");
+    if (!sectionEl || !listEl) return;
+    try {
+      var res = await sb
+        .from("posts_view")
+        .select("id, title, author_display, recent_like_count, created_at")
+        .gt("recent_like_count", 0)
+        .order("recent_like_count", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (res.error) throw res.error;
+
+      var posts = res.data || [];
+      if (posts.length === 0) return;
+
+      var html = '<ul class="recent-list">';
+      posts.forEach(function (post) {
+        html +=
+          '<li class="recent-item">' +
+            '<a href="board-view.html?id=' + encodeURIComponent(post.id) + '">' +
+              '<span class="popular-like">♥ ' + (Number(post.recent_like_count) || 0) + "</span>" +
+              '<div class="recent-info">' +
+                '<div class="recent-title">' + escapeHtml(post.title) + "</div>" +
+              "</div>" +
+              '<span class="popular-author">' + escapeHtml(post.author_display) + "</span>" +
+            "</a>" +
+          "</li>";
+      });
+      html += "</ul>";
+      listEl.innerHTML = html;
+      sectionEl.hidden = false;
+    } catch (err) {
+      // 인기 글 로드 실패 시 섹션을 숨긴 채로 둠 (홈 화면을 막지 않음)
     }
   }
 

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /messages.html
+
+Sitemap: https://koreasg.github.io/sitemap.xml

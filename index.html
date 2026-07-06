@@ -3,9 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>싱가포르 한인 커뮤니티 - KoreaSG</title>
-  <meta name="description" content="싱가포르 한인들을 위한 중고거래·커뮤니티 사이트">
+  <title>싱가포르 한인 커뮤니티 KoreaSG — 중고거래·생활정보·교민 소통</title>
+  <meta name="description" content="싱가포르 한인 커뮤니티 KoreaSG. 싱가포르 교민을 위한 한인 중고거래, 생활정보 공유, 자유로운 소통 공간입니다.">
+  <link rel="canonical" href="https://koreasg.github.io/">
+  <meta property="og:title" content="싱가포르 한인 커뮤니티 KoreaSG — 중고거래·생활정보·교민 소통">
+  <meta property="og:description" content="싱가포르 교민을 위한 한인 중고거래, 생활정보 공유, 자유로운 소통 공간입니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://koreasg.github.io/">
+  <meta property="og:site_name" content="싱가포르 한인 커뮤니티 KoreaSG">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "싱가포르 한인 커뮤니티 KoreaSG",
+    "url": "https://koreasg.github.io/",
+    "inLanguage": "ko",
+    "description": "싱가포르 교민을 위한 한인 중고거래, 생활정보 공유, 자유로운 소통 공간"
+  }
+  </script>
   <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <style>
+    .home-section-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 0;
+    }
+    .popular-like {
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .popular-author {
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-shrink: 0;
+      max-width: 96px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
@@ -36,12 +79,26 @@
         <h2>최근 매물 <a class="more-link" href="market.html">더보기 &rsaquo;</a></h2>
         <div id="recent-items"><div class="empty-state">불러오는 중…</div></div>
       </section>
-      <section class="home-section">
-        <h2>최근 글 <a class="more-link" href="board.html">더보기 &rsaquo;</a></h2>
-        <div id="recent-posts"><div class="empty-state">불러오는 중…</div></div>
-      </section>
+      <div class="home-section-stack">
+        <section class="home-section" id="popular-posts-section" hidden>
+          <h2>인기 글 <a class="more-link" href="board.html?sort=popular">더보기 &rsaquo;</a></h2>
+          <div id="popular-posts"></div>
+        </section>
+        <section class="home-section">
+          <h2>최근 글 <a class="more-link" href="board.html">더보기 &rsaquo;</a></h2>
+          <div id="recent-posts"><div class="empty-state">불러오는 중…</div></div>
+        </section>
+      </div>
     </div>
   </main>
+
+  <section class="container" aria-label="사이트 소개">
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.7; margin: 32px 0 8px;">
+      KoreaSG는 싱가포르 교민들이 모여 소통하는 싱가포르 한인 커뮤니티입니다.
+      한인 중고거래 게시판에서 물건을 안전하게 사고팔고, 커뮤니티 게시판에서 싱가포르 생활정보를 나눠 보세요.
+      회원가입 후 누구나 자유롭게 글을 올리고 쪽지로 교민들과 직접 연락할 수 있습니다.
+    </p>
+  </section>
 
   <footer class="site-footer">
     KoreaSG — 싱가포르 한인 커뮤니티

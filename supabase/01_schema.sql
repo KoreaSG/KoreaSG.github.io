@@ -213,6 +213,22 @@ create index if not exists post_comments_post_id_created_at_idx
 create index if not exists rate_events_ip_action_created_at_idx
   on public.rate_events (ip, action, created_at desc);
 
+-- ---------- v3 forward-compat (owned by 05_messages_likes.sql) ----------
+-- posts_view / items_view below reference post_likes and view_count,
+-- which 05_messages_likes.sql creates — but this file re-runs BEFORE 05
+-- on the live database, so ensure they exist first (identical idempotent
+-- DDL; 05 re-running it is a no-op).
+
+create table if not exists public.post_likes (
+  post_id    uuid not null references public.posts(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (post_id, user_id)
+);
+
+alter table public.posts add column if not exists view_count integer not null default 0;
+alter table public.items add column if not exists view_count integer not null default 0;
+
 -- ---------- views ----------
 -- Views run as owner (security_invoker = off, the default) so they can
 -- read the RLS-locked tables, but auth.uid() still reads the request
@@ -230,6 +246,7 @@ select
   i.description,
   i.image_paths,
   i.status,
+  i.view_count,
   i.created_at,
   i.updated_at,
   (select count(*) from public.item_comments c where c.item_id = i.id) as comment_count,
@@ -263,6 +280,15 @@ select
   p.created_at,
   p.updated_at,
   (select count(*) from public.post_comments c where c.post_id = p.id) as comment_count,
+  (select count(*) from public.post_likes pl where pl.post_id = p.id) as like_count,
+  (select count(*) from public.post_likes pl
+    where pl.post_id = p.id
+      and pl.created_at > now() - interval '7 days') as recent_like_count,
+  p.view_count,
+  (auth.uid() is not null and exists (
+    select 1 from public.post_likes pl
+     where pl.post_id = p.id and pl.user_id = auth.uid()
+  )) as liked_by_me,
   (auth.uid() is not null and auth.uid() = p.user_id) as is_mine
 from public.posts p
 left join public.profiles pr on pr.id = p.user_id;

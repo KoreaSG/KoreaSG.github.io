@@ -11,6 +11,28 @@
 //   logoutUser()                        → Promise (로그아웃 후 index.html 이동)
 
 var _authSubscribed = false;
+var _unreadFetched = false;
+
+/**
+ * 헤더 쪽지함 배지 갱신 — unread_count RPC 1회 호출
+ * (페이지 로드당 1회, messages.js에서 읽음 처리 후 재호출)
+ */
+function refreshUnreadBadge() {
+  if (!APP_CONFIGURED || !sb) return;
+  var badge = document.querySelector("#nav-account .msg-badge");
+  if (!badge) return;
+  sb.rpc("unread_count").then(function (res) {
+    var el = document.querySelector("#nav-account .msg-badge");
+    if (!el) return;
+    var n = (!res.error && Number(res.data)) || 0;
+    if (n > 0) {
+      el.textContent = n > 99 ? "99+" : String(n);
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  });
+}
 
 /**
  * 캐시된 프로필 반환 ({id, username, region, is_admin} 또는 null)
@@ -58,11 +80,16 @@ function _renderAccountArea() {
   var profile = getProfile();
   if (profile) {
     slot.innerHTML =
+      '<a class="nav-link nav-msg-link" href="messages.html">쪽지 <span class="msg-badge" hidden></span></a>' +
       '<span class="nav-user"><b>' + escapeHtml(profile.username) + "</b>님</span>" +
       '<button type="button" class="nav-logout-btn">로그아웃</button>';
     slot.querySelector(".nav-logout-btn").addEventListener("click", function () {
       logoutUser();
     });
+    if (!_unreadFetched) {
+      _unreadFetched = true;
+      refreshUnreadBadge();
+    }
   } else {
     slot.innerHTML =
       '<a class="nav-link" href="login.html">로그인</a>' +

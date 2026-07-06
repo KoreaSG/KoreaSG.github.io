@@ -3,9 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>커뮤니티 - KoreaSG</title>
-  <meta name="description" content="싱가포르 한인 커뮤니티 게시판">
+  <title>커뮤니티 게시판 — 싱가포르 교민 생활정보 | KoreaSG</title>
+  <meta name="description" content="싱가포르 교민들의 커뮤니티 게시판. 싱가포르 생활정보, 질문과 답변, 일상 이야기를 한인들과 자유롭게 나누는 공간입니다.">
+  <link rel="canonical" href="https://koreasg.github.io/board.html">
+  <meta property="og:title" content="커뮤니티 게시판 — 싱가포르 교민 생활정보 | KoreaSG">
+  <meta property="og:description" content="싱가포르 생활정보, 질문과 답변, 일상 이야기를 한인들과 자유롭게 나누는 공간입니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://koreasg.github.io/board.html">
+  <meta property="og:site_name" content="싱가포르 한인 커뮤니티 KoreaSG">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <style>
+    .sort-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .sort-tab {
+      padding: 7px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sort-tab:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .sort-tab.is-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .board-row-stats {
+      flex-shrink: 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .board-row-stats .like-count {
+      color: var(--danger);
+      font-weight: 600;
+      margin-right: 6px;
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
@@ -18,6 +65,8 @@
       <button type="button" id="search-btn" class="btn">검색</button>
       <a class="btn btn-primary" href="board-new.html">글쓰기</a>
     </div>
+
+    <div id="sort-tabs" class="sort-tabs"></div>
 
     <div id="board-list"><div class="empty-state">불러오는 중…</div></div>
     <div id="board-pagination"></div>

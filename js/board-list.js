@@ -10,6 +10,7 @@
   var paginationEl = document.getElementById("board-pagination");
   var searchInput = document.getElementById("search-input");
   var searchBtn = document.getElementById("search-btn");
+  var sortTabsEl = document.getElementById("sort-tabs");
 
   // 검색어에서 % 와 , 제거 (ilike 필터 안전 처리)
   function sanitizeQuery(str) {
@@ -17,22 +18,35 @@
   }
 
   var q = sanitizeQuery(getParam("q"));
+  var sort = getParam("sort") === "popular" ? "popular" : "new";
   var page = parseInt(getParam("page"), 10);
   if (!page || page < 1) page = 1;
 
   searchInput.value = q;
 
-  function makeHref(p, query) {
+  function makeHref(p, query, sortKey) {
     var params = new URLSearchParams();
     if (query) params.set("q", query);
+    if (sortKey === "popular") params.set("sort", "popular");
     if (p > 1) params.set("page", String(p));
     var qs = params.toString();
     return "board.html" + (qs ? "?" + qs : "");
   }
 
   function goSearch() {
-    window.location.href = makeHref(1, sanitizeQuery(searchInput.value));
+    window.location.href = makeHref(1, sanitizeQuery(searchInput.value), sort);
   }
+
+  function renderSortTabs() {
+    if (!sortTabsEl) return;
+    sortTabsEl.innerHTML =
+      '<a class="sort-tab' + (sort === "new" ? " is-active" : "") + '" href="' +
+        escapeHtml(makeHref(1, q, "new")) + '">최신순</a>' +
+      '<a class="sort-tab' + (sort === "popular" ? " is-active" : "") + '" href="' +
+        escapeHtml(makeHref(1, q, "popular")) + '">인기순</a>';
+  }
+
+  renderSortTabs();
 
   searchBtn.addEventListener("click", goSearch);
   searchInput.addEventListener("keydown", function (e) {
@@ -61,12 +75,18 @@
     var html = '<div class="board-table">';
     rows.forEach(function (row) {
       var count = Number(row.comment_count) || 0;
+      var likeCount = Number(row.like_count) || 0;
+      var viewCount = Number(row.view_count) || 0;
       html +=
         '<div class="board-row">' +
           '<a class="board-row-title" href="board-view.html?id=' + encodeURIComponent(row.id) + '">' +
             escapeHtml(row.title) +
             (count > 0 ? '<span class="comment-count">[' + count + "]</span>" : "") +
           "</a>" +
+          '<span class="board-row-stats">' +
+            (likeCount > 0 ? '<span class="like-count">♥ ' + likeCount + "</span>" : "") +
+            "조회 " + viewCount +
+          "</span>" +
           '<span class="board-row-author">' + escapeHtml(row.author_display) + "</span>" +
           '<span class="board-row-date">' + formatDate(row.created_at) + "</span>" +
         "</div>";
@@ -81,9 +101,17 @@
 
     var query = sb
       .from("posts_view")
-      .select("id, title, author_display, created_at, comment_count", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(from, to);
+      .select("id, title, author_display, created_at, comment_count, like_count, view_count", { count: "exact" });
+
+    if (sort === "popular") {
+      query = query
+        .order("recent_like_count", { ascending: false })
+        .order("created_at", { ascending: false });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
+    query = query.range(from, to);
 
     if (q) {
       query = query.ilike("title", "%" + q + "%");
@@ -98,7 +126,7 @@
       }
       renderList(res.data);
       renderPagination(paginationEl, page, res.count || 0, PAGE_SIZE_BOARD, function (p) {
-        return makeHref(p, q);
+        return makeHref(p, q, sort);
       });
     });
   }

@@ -34,3 +34,25 @@ npx serve .
 
 - 숫자 4자리 비밀번호는 **가벼운 수정 방지 수단**입니다.
   강력한 보안이 필요한 용도가 아닌, 캐주얼한 편집 보호 목적입니다.
+
+## SEO / 검색 등록
+
+사이트에는 페이지별 title·description·canonical·Open Graph 태그, `robots.txt`, `sitemap.xml`, 홈의 JSON-LD(WebSite) 스키마가 적용되어 있습니다. 검색 노출을 위해 아래 등록 작업을 한 번 수행해야 합니다.
+
+### Google Search Console
+
+1. https://search.google.com/search-console 접속 → **URL 접두어(URL-prefix)** 속성으로 `https://koreasg.github.io/` 추가
+2. 소유권 확인은 **HTML 태그** 방식 권장:
+   - Search Console이 발급하는 `content="..."` 토큰 값을 받아
+     `index.html`의 `<head>`에 `<meta name="google-site-verification" content="발급받은토큰">` 형태로 추가 후 push
+   - 또는 발급받은 **HTML 파일을 저장소 루트에 업로드**하는 방식도 가능
+3. 확인 완료 후 **Sitemaps 메뉴**에서 `sitemap.xml` 제출
+
+### Naver Search Advisor (네이버 서치어드바이저)
+
+교민 대상 사이트 특성상 네이버 검색 유입도 중요합니다.
+
+1. https://searchadvisor.naver.com 접속 → 웹마스터 도구에서 `https://koreasg.github.io/` 사이트 등록
+2. 소유권 확인: **HTML 태그** 방식으로 발급받은
+   `<meta name="naver-site-verification" content="발급받은토큰">`을 `index.html`의 `<head>`에 추가 (또는 HTML 파일 루트 업로드)
+3. 등록 완료 후 **요청 → 사이트맵 제출**에서 `https://koreasg.github.io/sitemap.xml` 제출

@@ -38,9 +38,27 @@
     return !!(profile && profile.is_admin);
   }
 
+  // 조회수 증가 — 세션당 1회, 실패해도 무시 (fire-and-forget)
+  function trackView() {
+    var key = "viewed_post_" + postId;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch (e) {
+      // sessionStorage 사용 불가 환경 — 그냥 1회 호출
+    }
+    try {
+      sb.rpc("increment_view", { p_kind: "post", p_id: postId }).then(null, function () {});
+    } catch (e) {
+      // 절대 페이지를 막지 않음
+    }
+  }
+
   function renderPost(post) {
     document.title = post.title + " - KoreaSG";
     var commentCount = Number(post.comment_count) || 0;
+    var likeCount = Number(post.like_count) || 0;
+    var viewCount = Number(post.view_count) || 0;
 
     var actions = "";
     if (post.is_mine) {
@@ -50,15 +68,28 @@
       actions += '<button type="button" class="btn btn-danger" id="delete-btn">삭제</button>';
     }
 
+    // 익명 글은 익명성 보호를 위해 쪽지 버튼을 아예 표시하지 않음
+    var messageBtnHtml = "";
+    if (!post.is_anonymous && !post.is_mine) {
+      messageBtnHtml = ' <button type="button" id="message-author-btn" class="btn btn-ghost btn-sm">쪽지 보내기</button>';
+    }
+
     postContainer.innerHTML =
       '<article class="post-view">' +
         '<h1 class="post-title">' + escapeHtml(post.title) + "</h1>" +
         '<div class="post-meta">' +
           escapeHtml(post.author_display) + " · " +
           formatDate(post.created_at) + " · " +
+          "조회 " + viewCount + " · " +
           "댓글 " + commentCount +
+          messageBtnHtml +
         "</div>" +
         '<div class="post-content">' + escapeHtml(post.content) + "</div>" +
+        '<div class="post-like-wrap">' +
+          '<button type="button" id="like-btn" class="post-like-btn' +
+            (post.liked_by_me ? " is-liked" : "") + '" aria-pressed="' +
+            (post.liked_by_me ? "true" : "false") + '">♥ 좋아요 ' + likeCount + "</button>" +
+        "</div>" +
       "</article>" +
       '<div class="post-actions">' +
         actions +
@@ -69,6 +100,47 @@
     var deleteBtn = document.getElementById("delete-btn");
     if (editBtn) editBtn.addEventListener("click", onEdit);
     if (deleteBtn) deleteBtn.addEventListener("click", onDelete);
+
+    var likeBtn = document.getElementById("like-btn");
+    if (likeBtn) likeBtn.addEventListener("click", onLikeToggle);
+
+    var messageBtn = document.getElementById("message-author-btn");
+    if (messageBtn) {
+      messageBtn.addEventListener("click", function () {
+        if (!getProfile()) {
+          var next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = "login.html?next=" + next;
+          return;
+        }
+        openMessageModal({ postId: postId, title: post.title });
+      });
+    }
+  }
+
+  function onLikeToggle() {
+    var btn = document.getElementById("like-btn");
+    if (!btn) return;
+
+    if (!getProfile()) {
+      var next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = "login.html?next=" + next;
+      return;
+    }
+
+    setBusy(btn, true);
+    sb.rpc("toggle_post_like", { p_post_id: postId }).then(function (res) {
+      setBusy(btn, false);
+      if (res.error) {
+        showToast(mapRpcError(res.error), "error");
+        return;
+      }
+      var data = res.data || {};
+      var liked = !!data.liked;
+      var count = Number(data.like_count) || 0;
+      btn.classList.toggle("is-liked", liked);
+      btn.setAttribute("aria-pressed", liked ? "true" : "false");
+      btn.textContent = "♥ 좋아요 " + count;
+    });
   }
 
   function onEdit() {
@@ -197,7 +269,7 @@
 
   function loadPost() {
     sb.from("posts_view")
-      .select("id, title, content, author_display, is_anonymous, created_at, updated_at, comment_count, is_mine")
+      .select("id, title, content, author_display, is_anonymous, created_at, updated_at, comment_count, is_mine, like_count, view_count, liked_by_me")
       .eq("id", postId)
       .maybeSingle()
       .then(function (res) {
@@ -211,6 +283,7 @@
           return;
         }
         renderPost(res.data);
+        trackView();
         commentsSection.hidden = false;
         loadComments();
       });

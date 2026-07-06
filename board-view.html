@@ -3,9 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>게시글 - KoreaSG</title>
-  <meta name="description" content="싱가포르 한인 커뮤니티 게시글">
+  <title>커뮤니티 게시글 | 싱가포르 한인 커뮤니티 KoreaSG</title>
+  <meta name="description" content="싱가포르 한인 커뮤니티 KoreaSG 게시글. 싱가포르 교민들의 생활정보와 이야기를 읽고 댓글로 소통해 보세요.">
+  <link rel="canonical" href="https://koreasg.github.io/board-view.html">
+  <meta property="og:title" content="커뮤니티 게시글 | 싱가포르 한인 커뮤니티 KoreaSG">
+  <meta property="og:description" content="싱가포르 교민들의 생활정보와 이야기를 읽고 댓글로 소통해 보세요.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://koreasg.github.io/board-view.html">
+  <meta property="og:site_name" content="싱가포르 한인 커뮤니티 KoreaSG">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <style>
     .post-view {
       background: var(--bg-card);
@@ -30,6 +39,42 @@
       white-space: pre-wrap;
       word-break: break-word;
       min-height: 120px;
+    }
+    .post-like-wrap {
+      display: flex;
+      justify-content: center;
+      padding-top: 24px;
+    }
+    .post-like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .post-like-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .post-like-btn.is-liked {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+    .post-like-btn.is-liked:hover {
+      color: #fff;
+      opacity: 0.9;
+    }
+    .post-like-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
     .post-actions {
       display: flex;
@@ -119,6 +164,7 @@
   <script src="js/db.js"></script>
   <script src="js/util.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/messages-send.js"></script>
   <script src="js/board-view.js"></script>
 </body>
 </html>
