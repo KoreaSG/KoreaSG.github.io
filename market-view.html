@@ -72,16 +72,17 @@
       font-size: 17px;
       margin-bottom: 8px;
     }
-    .comment-form-grid {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .comment-form-grid input {
-      flex: 1;
-    }
     .comment-item .comment-meta .btn {
       margin-left: auto;
+    }
+    .comment-login-notice {
+      font-size: 14px;
+      color: var(--text-sub);
+      padding: 12px 0;
+    }
+    .comment-login-notice a {
+      color: var(--primary);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -98,13 +99,8 @@
       <div id="comment-list"></div>
 
       <form id="comment-form">
-        <div class="comment-form-grid">
-          <input type="text" id="comment-author" maxlength="30" required placeholder="이름">
-          <input type="password" id="comment-password" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" placeholder="비밀번호 (선택)">
-        </div>
         <div class="form-group">
           <textarea id="comment-content" maxlength="1000" required placeholder="댓글을 입력하세요" style="min-height:80px"></textarea>
-          <div class="form-hint">비밀번호 미입력 시 글 작성자만 삭제 가능합니다.</div>
         </div>
         <div style="text-align:right">
           <button type="submit" id="comment-submit" class="btn btn-primary btn-sm">등록</button>
@@ -121,6 +117,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/db.js"></script>
   <script src="js/util.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/upload.js"></script>
   <script src="js/market-view.js"></script>
 </body>

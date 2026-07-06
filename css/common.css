@@ -817,3 +817,47 @@ input[type="file"] {
     flex-wrap: wrap;
   }
 }
+
+/* --- 헤더 계정 영역 (auth.js가 #nav-account에 주입) --- */
+.nav-account {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-user {
+  color: #fff;
+  font-size: 14px;
+  padding: 8px 6px;
+  white-space: nowrap;
+}
+
+.nav-logout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 768px) {
+  .nav-account {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    margin-top: 6px;
+    padding-top: 8px;
+  }
+}

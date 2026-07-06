@@ -1,8 +1,9 @@
 // 커뮤니티 목록 페이지
-// 의존: config.js → supabase-js → db.js → util.js
+// 의존: config.js → supabase-js → db.js → util.js → auth.js
 
 (function () {
   renderHeader("board");
+  initAuth();
 
   var noticeEl = document.getElementById("board-notice");
   var listEl = document.getElementById("board-list");
@@ -66,7 +67,7 @@
             escapeHtml(row.title) +
             (count > 0 ? '<span class="comment-count">[' + count + "]</span>" : "") +
           "</a>" +
-          '<span class="board-row-author">' + escapeHtml(row.author_name) + "</span>" +
+          '<span class="board-row-author">' + escapeHtml(row.author_display) + "</span>" +
           '<span class="board-row-date">' + formatDate(row.created_at) + "</span>" +
         "</div>";
     });
@@ -80,7 +81,7 @@
 
     var query = sb
       .from("posts_view")
-      .select("id, title, author_name, created_at, comment_count", { count: "exact" })
+      .select("id, title, author_display, created_at, comment_count", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 

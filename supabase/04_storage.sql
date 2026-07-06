@@ -19,10 +19,12 @@ on conflict (id) do update
       allowed_mime_types = excluded.allowed_mime_types;
 
 -- ---------- policies on storage.objects ----------
--- Uploads and deletes are restricted to the items/ prefix of this bucket.
+-- Uploads and deletes are restricted to signed-in users (authenticated)
+-- and to the items/ prefix of this bucket.
 -- No UPDATE policy (objects are immutable once uploaded).
--- SELECT policy is required for the delete API to find its target rows
--- (public download alone does not cover storage.objects reads).
+-- SELECT policy stays anon + authenticated: it is required for the
+-- delete API to find its target rows (public download alone does not
+-- cover storage.objects reads).
 
 drop policy if exists "item_images_select" on storage.objects;
 create policy "item_images_select"
@@ -38,7 +40,7 @@ drop policy if exists "item_images_insert" on storage.objects;
 create policy "item_images_insert"
   on storage.objects
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
     bucket_id = 'item-images'
     and name like 'items/%'
@@ -48,7 +50,7 @@ drop policy if exists "item_images_delete" on storage.objects;
 create policy "item_images_delete"
   on storage.objects
   for delete
-  to anon, authenticated
+  to authenticated
   using (
     bucket_id = 'item-images'
     and name like 'items/%'

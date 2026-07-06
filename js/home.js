@@ -1,8 +1,9 @@
 // 홈 페이지: 최근 매물 5건 + 최근 글 5건
-// 의존: config.js, supabase-js, db.js, util.js, upload.js
+// 의존: config.js, supabase-js, db.js, util.js, auth.js, upload.js
 
 (function () {
   renderHeader("home");
+  initAuth();
 
   var itemsEl = document.getElementById("recent-items");
   var postsEl = document.getElementById("recent-posts");

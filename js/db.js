@@ -29,3 +29,24 @@ const PAGE_SIZE_BOARD = 20;
 const STORAGE_BUCKET = "item-images";
 
 const ITEM_STATUS = { selling: "판매중", reserved: "예약중", sold: "판매완료" };
+
+// --- 인증(Auth) 공용 상수 ---
+const REGIONS = [
+  "주롱",
+  "부킷티마/클레멘티",
+  "우드랜즈/이슌",
+  "앙모키오/비샨",
+  "세랑군/호우강",
+  "풍골/셍캉",
+  "탬피니스/파시르리스",
+  "베독/이스트코스트",
+  "시티/오차드",
+  "노비나/토아파요",
+  "하버프론트/센토사",
+  "기타(싱가포르 내)",
+  "싱가포르 외"
+];
+
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+
+const AUTH_EMAIL_DOMAIN = "id.koreasg.app";

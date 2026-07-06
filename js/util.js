@@ -240,6 +240,8 @@ function showToast(message, type) {
  */
 function mapRpcError(error) {
   var msg = (error && error.message) || "";
+  if (msg.indexOf("auth_required") !== -1) return "로그인이 필요합니다.";
+  if (msg.indexOf("forbidden") !== -1) return "권한이 없습니다.";
   if (msg.indexOf("wrong_password") !== -1) return "비밀번호가 일치하지 않습니다.";
   if (msg.indexOf("rate_limited") !== -1) return "요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.";
   if (msg.indexOf("not_found") !== -1) return "대상을 찾을 수 없습니다.";
@@ -289,6 +291,7 @@ function renderHeader(active) {
           '<a class="' + navClass("home") + '" href="index.html">홈</a>' +
           '<a class="' + navClass("market") + '" href="market.html">중고거래</a>' +
           '<a class="' + navClass("board") + '" href="board.html">커뮤니티</a>' +
+          '<div class="nav-account" id="nav-account"></div>' +
         "</nav>" +
       "</div>" +
     "</header>";

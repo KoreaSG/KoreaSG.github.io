@@ -1,8 +1,9 @@
 // 중고거래 목록 페이지
-// 의존: config.js, supabase-js, db.js, util.js, upload.js(publicUrl)
+// 의존: config.js, supabase-js, db.js, util.js, auth.js, upload.js(publicUrl)
 
 (function () {
   renderHeader("market");
+  initAuth();
 
   var gridEl = document.getElementById("item-grid");
   var paginationEl = document.getElementById("pagination");
@@ -113,6 +114,10 @@
             '<div class="card-body">' +
               '<div class="card-title">' + badge + escapeHtml(item.title) + "</div>" +
               '<div class="card-price">' + escapeHtml(formatPrice(item.price)) + "</div>" +
+              '<div class="card-meta">' +
+                "<span>" + escapeHtml(item.seller_username || "알수없음") + "</span>" +
+                (item.seller_region ? "<span>" + escapeHtml(item.seller_region) + "</span>" : "") +
+              "</div>" +
               '<div class="card-meta">' +
                 "<span>" + escapeHtml(item.category) + "</span>" +
                 "<span>" + escapeHtml(formatDate(item.created_at)) + "</span>" +

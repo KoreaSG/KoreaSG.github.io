@@ -1,5 +1,5 @@
 // 중고거래 작성/수정 페이지
-// 의존: config.js, supabase-js, db.js, util.js, upload.js
+// 의존: config.js, supabase-js, db.js, util.js, auth.js, upload.js
 
 (function () {
   renderHeader("market");
@@ -8,8 +8,6 @@
 
   var itemId = getParam("id");
   var isEdit = !!itemId;
-  var pwKey = isEdit ? "edit_pw_item_" + itemId : null;
-  var storedPassword = isEdit ? sessionStorage.getItem(pwKey) : null;
 
   var form = document.getElementById("item-form");
   var pageTitle = document.getElementById("page-title");
@@ -22,8 +20,6 @@
   var descInput = document.getElementById("desc-input");
   var statusGroup = document.getElementById("status-group");
   var statusSelect = document.getElementById("status-select");
-  var passwordGroup = document.getElementById("password-group");
-  var passwordInput = document.getElementById("password-input");
   var submitBtn = document.getElementById("submit-btn");
 
   // 이미지 상태: { kind: 'existing', path } | { kind: 'new', file, previewUrl }
@@ -36,12 +32,6 @@
       notice.hidden = false;
       notice.textContent = "서비스 준비중입니다.";
     }
-    return;
-  }
-
-  // 수정 모드인데 검증된 비밀번호가 없으면 상세로 돌려보냄
-  if (isEdit && !storedPassword) {
-    window.location.replace("market-view.html?id=" + encodeURIComponent(itemId));
     return;
   }
 
@@ -58,10 +48,19 @@
     pageTitle.textContent = "상품 수정";
     submitBtn.textContent = "수정하기";
     statusGroup.hidden = false;
-    passwordGroup.hidden = true;
-    loadItem();
-  } else {
-    form.hidden = false;
+  }
+
+  init();
+
+  // 로그인 필수 — 세션 복원 후 진행 (미로그인 시 login.html로 리다이렉트)
+  async function init() {
+    await initAuth();
+    await requireLogin();
+    if (isEdit) {
+      loadItem();
+    } else {
+      form.hidden = false;
+    }
   }
 
   imageInput.addEventListener("change", function () {
@@ -158,13 +157,6 @@
     var fields = readFields();
     if (!fields) return;
 
-    var password = passwordInput.value.trim();
-    if (!/^\d{4}$/.test(password)) {
-      showToast("비밀번호는 숫자 4자리여야 합니다.", "error");
-      passwordInput.focus();
-      return;
-    }
-
     var newFiles = images.map(function (img) { return img.file; });
 
     setBusy(submitBtn, true);
@@ -180,7 +172,6 @@
         p_category: fields.category,
         p_price: fields.price,
         p_description: fields.description,
-        p_password: password,
         p_image_paths: uploaded
       });
       if (res.error) {
@@ -220,7 +211,6 @@
 
       var res = await sb.rpc("update_item", {
         p_id: itemId,
-        p_password: storedPassword,
         p_title: fields.title,
         p_category: fields.category,
         p_price: fields.price,
@@ -239,7 +229,6 @@
       var removedPaths = originalPaths.filter(function (p) { return !kept[p]; });
       await removeImages(removedPaths);
 
-      sessionStorage.removeItem(pwKey);
       window.location.href = "market-view.html?id=" + encodeURIComponent(itemId);
     } catch (err) {
       setProgress("");
@@ -263,12 +252,17 @@
       }
 
       var item = res.data;
+      if (!item.is_mine) {
+        showToast("권한이 없습니다.", "error");
+        window.location.replace("market-view.html?id=" + encodeURIComponent(itemId));
+        return;
+      }
+
       titleInput.value = item.title || "";
       categorySelect.value = item.category || "";
       priceInput.value = item.price != null ? item.price : "";
       descInput.value = item.description || "";
       if (ITEM_STATUS[item.status]) statusSelect.value = item.status;
-      passwordInput.required = false;
 
       originalPaths = (item.image_paths || []).slice();
       images = originalPaths.map(function (p) {

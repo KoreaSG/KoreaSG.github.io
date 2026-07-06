@@ -13,9 +13,13 @@ alter table public.item_comments enable row level security;
 alter table public.posts         enable row level security;
 alter table public.post_comments enable row level security;
 alter table public.rate_events   enable row level security;
+-- profiles: RLS on, NO policies — all access goes through the signup
+-- trigger (security definer) and the RPCs in 03_functions.sql.
+alter table public.profiles      enable row level security;
 
 -- ---------- table privileges ----------
--- API roles get no direct table access at all (defense in depth on top of RLS).
+-- API roles get no direct table access at all (defense in depth on top
+-- of RLS). This covers profiles too.
 
 revoke all on all tables in schema public from anon, authenticated;
 

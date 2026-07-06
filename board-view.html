@@ -54,6 +54,29 @@
     #comment-form textarea {
       min-height: 80px;
     }
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+    .comment-login-notice {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+    .comment-login-notice a {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .comment-login-notice a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -72,17 +95,15 @@
 
       <form id="comment-form">
         <div class="form-group">
-          <label for="comment-author">이름</label>
-          <input type="text" id="comment-author" maxlength="30" required placeholder="이름을 입력해주세요">
-        </div>
-        <div class="form-group">
           <label for="comment-content">내용</label>
           <textarea id="comment-content" rows="3" maxlength="2000" required placeholder="댓글을 입력해주세요"></textarea>
         </div>
         <div class="form-group">
-          <label for="comment-password">비밀번호 (선택)</label>
-          <input type="password" id="comment-password" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" placeholder="숫자 4자리">
-          <p class="form-hint">미입력 시 글 작성자만 삭제 가능</p>
+          <label class="checkbox-label">
+            <input type="checkbox" id="comment-anonymous">
+            익명으로 작성
+          </label>
+          <p class="form-hint">체크 시 아이디 대신 '익명'으로 표시됩니다.</p>
         </div>
         <button type="submit" class="btn btn-primary" id="comment-submit-btn">댓글 등록</button>
       </form>
@@ -97,6 +118,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/db.js"></script>
   <script src="js/util.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/board-view.js"></script>
 </body>
 </html>

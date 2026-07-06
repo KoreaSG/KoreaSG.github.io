@@ -1,5 +1,6 @@
 // 커뮤니티 게시글 상세 페이지
-// 의존: config.js → supabase-js → db.js → util.js
+// 의존: config.js → supabase-js → db.js → util.js → auth.js
+// is_mine은 호출자 JWT 기준 → initAuth()로 세션 복원 후 데이터 조회
 
 (function () {
   renderHeader("board");
@@ -10,15 +11,15 @@
   var commentList = document.getElementById("comment-list");
   var commentCountLabel = document.getElementById("comment-count-label");
   var commentForm = document.getElementById("comment-form");
-  var commentAuthorInput = document.getElementById("comment-author");
   var commentContentInput = document.getElementById("comment-content");
-  var commentPasswordInput = document.getElementById("comment-password");
+  var commentAnonymousInput = document.getElementById("comment-anonymous");
   var commentSubmitBtn = document.getElementById("comment-submit-btn");
 
   if (!APP_CONFIGURED) {
     noticeEl.hidden = false;
     noticeEl.textContent = "서비스 준비중입니다";
     postContainer.innerHTML = "";
+    initAuth();
     return;
   }
 
@@ -32,70 +33,63 @@
     commentsSection.hidden = true;
   }
 
-  if (!postId) {
-    showNotFound();
-    return;
+  function isAdmin() {
+    var profile = getProfile();
+    return !!(profile && profile.is_admin);
   }
 
   function renderPost(post) {
     document.title = post.title + " - KoreaSG";
     var commentCount = Number(post.comment_count) || 0;
 
+    var actions = "";
+    if (post.is_mine) {
+      actions += '<button type="button" class="btn" id="edit-btn">수정</button>';
+    }
+    if (post.is_mine || isAdmin()) {
+      actions += '<button type="button" class="btn btn-danger" id="delete-btn">삭제</button>';
+    }
+
     postContainer.innerHTML =
       '<article class="post-view">' +
         '<h1 class="post-title">' + escapeHtml(post.title) + "</h1>" +
         '<div class="post-meta">' +
-          escapeHtml(post.author_name) + " · " +
+          escapeHtml(post.author_display) + " · " +
           formatDate(post.created_at) + " · " +
           "댓글 " + commentCount +
         "</div>" +
         '<div class="post-content">' + escapeHtml(post.content) + "</div>" +
       "</article>" +
       '<div class="post-actions">' +
-        '<button type="button" class="btn" id="edit-btn">수정</button>' +
-        '<button type="button" class="btn btn-danger" id="delete-btn">삭제</button>' +
+        actions +
         '<a class="btn btn-ghost" href="board.html">목록</a>' +
       "</div>";
 
-    document.getElementById("edit-btn").addEventListener("click", onEdit);
-    document.getElementById("delete-btn").addEventListener("click", onDelete);
+    var editBtn = document.getElementById("edit-btn");
+    var deleteBtn = document.getElementById("delete-btn");
+    if (editBtn) editBtn.addEventListener("click", onEdit);
+    if (deleteBtn) deleteBtn.addEventListener("click", onDelete);
   }
 
   function onEdit() {
-    var editBtn = document.getElementById("edit-btn");
-    promptPassword("게시글 비밀번호 확인").then(function (pw) {
-      if (pw === null) return;
-      setBusy(editBtn, true);
-      sb.rpc("verify_post_password", { p_id: postId, p_password: pw }).then(function (res) {
-        setBusy(editBtn, false);
-        if (res.error) {
-          showToast(mapRpcError(res.error), "error");
-          return;
-        }
-        sessionStorage.setItem("edit_pw_post_" + postId, pw);
-        window.location.href = "board-new.html?id=" + encodeURIComponent(postId);
-      });
-    });
+    window.location.href = "board-new.html?id=" + encodeURIComponent(postId);
   }
 
   function onDelete() {
     var deleteBtn = document.getElementById("delete-btn");
-    promptPassword("게시글 비밀번호 확인").then(function (pw) {
-      if (pw === null) return;
-      confirmDialog("정말 삭제하시겠습니까?").then(function (ok) {
-        if (!ok) return;
-        setBusy(deleteBtn, true);
-        sb.rpc("delete_post", { p_id: postId, p_password: pw }).then(function (res) {
-          if (res.error) {
-            setBusy(deleteBtn, false);
-            showToast(mapRpcError(res.error), "error");
-            return;
-          }
-          showToast("게시글이 삭제되었습니다.", "success");
-          setTimeout(function () {
-            window.location.href = "board.html";
-          }, 600);
-        });
+    confirmDialog("정말 삭제하시겠습니까?").then(function (ok) {
+      if (!ok) return;
+      setBusy(deleteBtn, true);
+      sb.rpc("delete_post", { p_id: postId }).then(function (res) {
+        if (res.error) {
+          setBusy(deleteBtn, false);
+          showToast(mapRpcError(res.error), "error");
+          return;
+        }
+        showToast("게시글이 삭제되었습니다.", "success");
+        setTimeout(function () {
+          window.location.href = "board.html";
+        }, 600);
       });
     });
   }
@@ -111,13 +105,16 @@
 
     var html = "";
     rows.forEach(function (c) {
+      var canDelete = c.is_mine || isAdmin();
       html +=
         '<div class="comment-item">' +
           '<div class="comment-meta">' +
-            '<span class="comment-author">' + escapeHtml(c.author_name) + "</span>" +
+            '<span class="comment-author">' + escapeHtml(c.author_display) + "</span>" +
             '<span class="comment-date">' + formatDate(c.created_at) + "</span>" +
-            '<button type="button" class="btn btn-ghost btn-sm comment-delete" data-id="' +
-              escapeHtml(c.id) + '">삭제</button>' +
+            (canDelete
+              ? '<button type="button" class="btn btn-ghost btn-sm comment-delete" data-id="' +
+                escapeHtml(c.id) + '">삭제</button>'
+              : "") +
           "</div>" +
           '<div class="comment-body">' + escapeHtml(c.content) + "</div>" +
         "</div>";
@@ -127,7 +124,7 @@
 
   function loadComments() {
     sb.from("post_comments_view")
-      .select("id, post_id, author_name, content, created_at, has_password")
+      .select("id, post_id, author_display, is_anonymous, content, created_at, is_mine")
       .eq("post_id", postId)
       .order("created_at", { ascending: true })
       .then(function (res) {
@@ -146,10 +143,10 @@
     if (!btn) return;
     var commentId = btn.dataset.id;
 
-    promptPassword("댓글 비밀번호 (또는 글 비밀번호)").then(function (pw) {
-      if (pw === null) return;
+    confirmDialog("댓글을 삭제하시겠습니까?").then(function (ok) {
+      if (!ok) return;
       setBusy(btn, true);
-      sb.rpc("delete_post_comment", { p_id: commentId, p_password: pw }).then(function (res) {
+      sb.rpc("delete_post_comment", { p_id: commentId }).then(function (res) {
         if (res.error) {
           setBusy(btn, false);
           showToast(mapRpcError(res.error), "error");
@@ -164,26 +161,17 @@
   commentForm.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    var author = commentAuthorInput.value.trim();
     var content = commentContentInput.value.trim();
-    var password = commentPasswordInput.value.trim();
-
-    if (!author || !content) {
-      showToast("이름과 내용을 입력해주세요.", "error");
-      return;
-    }
-    if (password && !/^\d{4}$/.test(password)) {
-      showToast("비밀번호는 숫자 4자리여야 합니다.", "error");
-      commentPasswordInput.focus();
+    if (!content) {
+      showToast("내용을 입력해주세요.", "error");
       return;
     }
 
     setBusy(commentSubmitBtn, true);
     sb.rpc("add_post_comment", {
       p_post_id: postId,
-      p_author_name: author,
       p_content: content,
-      p_password: password || null
+      p_is_anonymous: commentAnonymousInput.checked
     }).then(function (res) {
       setBusy(commentSubmitBtn, false);
       if (res.error) {
@@ -196,23 +184,45 @@
     });
   });
 
-  // 게시글 로드
-  sb.from("posts_view")
-    .select("id, title, content, author_name, created_at, updated_at, comment_count")
-    .eq("id", postId)
-    .maybeSingle()
-    .then(function (res) {
-      if (res.error) {
-        showToast(mapRpcError(res.error), "error");
-        showNotFound();
-        return;
-      }
-      if (!res.data) {
-        showNotFound();
-        return;
-      }
-      renderPost(res.data);
-      commentsSection.hidden = false;
-      loadComments();
-    });
+  // 로그아웃 상태면 댓글 폼을 로그인 안내로 교체
+  function renderCommentFormState() {
+    if (getProfile()) return;
+    var next = encodeURIComponent(window.location.pathname + window.location.search);
+    var notice = document.createElement("p");
+    notice.className = "comment-login-notice";
+    notice.innerHTML =
+      '댓글을 작성하려면 <a href="login.html?next=' + next + '">로그인</a>이 필요합니다.';
+    commentForm.replaceWith(notice);
+  }
+
+  function loadPost() {
+    sb.from("posts_view")
+      .select("id, title, content, author_display, is_anonymous, created_at, updated_at, comment_count, is_mine")
+      .eq("id", postId)
+      .maybeSingle()
+      .then(function (res) {
+        if (res.error) {
+          showToast(mapRpcError(res.error), "error");
+          showNotFound();
+          return;
+        }
+        if (!res.data) {
+          showNotFound();
+          return;
+        }
+        renderPost(res.data);
+        commentsSection.hidden = false;
+        loadComments();
+      });
+  }
+
+  // 세션 복원(initAuth) 후 조회해야 is_mine이 올바르게 계산됨
+  initAuth().then(function () {
+    if (!postId) {
+      showNotFound();
+      return;
+    }
+    renderCommentFormState();
+    loadPost();
+  });
 })();

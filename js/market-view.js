@@ -1,5 +1,5 @@
 // 중고거래 상세 페이지
-// 의존: config.js, supabase-js, db.js, util.js, upload.js
+// 의존: config.js, supabase-js, db.js, util.js, auth.js, upload.js
 
 (function () {
   renderHeader("market");
@@ -11,10 +11,10 @@
   var commentsHeading = document.getElementById("comments-heading");
   var commentListEl = document.getElementById("comment-list");
   var commentForm = document.getElementById("comment-form");
-  var commentAuthor = document.getElementById("comment-author");
-  var commentPassword = document.getElementById("comment-password");
   var commentContent = document.getElementById("comment-content");
   var commentSubmit = document.getElementById("comment-submit");
+
+  var currentItem = null;
 
   if (!APP_CONFIGURED) {
     var notice = document.getElementById("market-notice");
@@ -31,7 +31,14 @@
     return;
   }
 
-  loadItem();
+  init();
+
+  // 세션 복원(initAuth) 후 조회해야 is_mine이 올바르게 계산됨
+  async function init() {
+    await initAuth();
+    setupCommentForm();
+    loadItem();
+  }
 
   function renderNotFound() {
     containerEl.innerHTML =
@@ -52,7 +59,8 @@
         renderNotFound();
         return;
       }
-      renderItem(res.data);
+      currentItem = res.data;
+      renderItem(currentItem);
       commentsSection.hidden = false;
       loadComments();
     } catch (err) {
@@ -86,22 +94,33 @@
         escapeHtml(ITEM_STATUS[item.status]) + "</span> ";
     }
 
+    var sellerHtml =
+      "판매자: " + escapeHtml(item.seller_username || "알수없음") +
+      (item.seller_region ? " (" + escapeHtml(item.seller_region) + ")" : "");
+
+    var profile = getProfile();
+    var canEdit = !!item.is_mine;
+    var canDelete = item.is_mine || (profile && profile.is_admin);
+
+    var actionsHtml = "";
+    if (canEdit) actionsHtml += '<button type="button" id="edit-btn" class="btn">수정</button>';
+    if (canDelete) actionsHtml += '<button type="button" id="delete-btn" class="btn btn-danger">삭제</button>';
+    actionsHtml += '<a class="btn btn-ghost" href="market.html">목록</a>';
+
     containerEl.innerHTML =
       '<article class="item-detail">' +
         galleryHtml +
         '<h1 class="item-title">' + badgeHtml + escapeHtml(item.title) + "</h1>" +
         '<div class="item-price">' + escapeHtml(formatPrice(item.price)) + "</div>" +
         '<div class="item-meta">' +
+          "<span>" + sellerHtml + "</span>" +
+          "<span>·</span>" +
           "<span>" + escapeHtml(item.category) + "</span>" +
           "<span>·</span>" +
           "<span>" + escapeHtml(formatDate(item.created_at)) + "</span>" +
         "</div>" +
         '<div class="item-desc">' + escapeHtml(item.description) + "</div>" +
-        '<div class="item-actions">' +
-          '<button type="button" id="edit-btn" class="btn">수정</button>' +
-          '<button type="button" id="delete-btn" class="btn btn-danger">삭제</button>' +
-          '<a class="btn btn-ghost" href="market.html">목록</a>' +
-        "</div>" +
+        '<div class="item-actions">' + actionsHtml + "</div>" +
       "</article>";
 
     // 갤러리 썸네일 클릭 → 메인 이미지 교체
@@ -118,38 +137,25 @@
       });
     }
 
-    document.getElementById("edit-btn").addEventListener("click", onEdit);
-    document.getElementById("delete-btn").addEventListener("click", onDelete);
+    var editBtn = document.getElementById("edit-btn");
+    var deleteBtn = document.getElementById("delete-btn");
+    if (editBtn) editBtn.addEventListener("click", onEdit);
+    if (deleteBtn) deleteBtn.addEventListener("click", onDelete);
   }
 
-  async function onEdit(e) {
-    var btn = e.currentTarget;
-    var pw = await promptPassword("비밀번호 확인");
-    if (pw === null) return;
-
-    setBusy(btn, true);
-    try {
-      var res = await sb.rpc("verify_item_password", { p_id: itemId, p_password: pw });
-      if (res.error) throw res.error;
-      sessionStorage.setItem("edit_pw_item_" + itemId, pw);
-      window.location.href = "market-new.html?id=" + encodeURIComponent(itemId);
-    } catch (err) {
-      showToast(mapRpcError(err), "error");
-      setBusy(btn, false);
-    }
+  function onEdit() {
+    window.location.href = "market-new.html?id=" + encodeURIComponent(itemId);
   }
 
   async function onDelete(e) {
     var btn = e.currentTarget;
-    var pw = await promptPassword("비밀번호 확인");
-    if (pw === null) return;
 
     var ok = await confirmDialog("정말 삭제하시겠습니까?");
     if (!ok) return;
 
     setBusy(btn, true);
     try {
-      var res = await sb.rpc("delete_item", { p_id: itemId, p_password: pw });
+      var res = await sb.rpc("delete_item", { p_id: itemId });
       if (res.error) throw res.error;
       await removeImages(res.data || []);
       showToast("삭제되었습니다.", "success");
@@ -177,14 +183,21 @@
         return;
       }
 
+      var profile = getProfile();
+      var isAdmin = !!(profile && profile.is_admin);
+      var isOwner = !!(currentItem && currentItem.is_mine);
+
       var html = "";
       comments.forEach(function (c) {
+        var canDelete = c.is_mine || isOwner || isAdmin;
         html +=
           '<div class="comment-item">' +
             '<div class="comment-meta">' +
-              '<span class="comment-author">' + escapeHtml(c.author_name) + "</span>" +
+              '<span class="comment-author">' + escapeHtml(c.author_username || "알수없음") + "</span>" +
               '<span class="comment-date">' + escapeHtml(formatDate(c.created_at)) + "</span>" +
-              '<button type="button" class="btn btn-ghost btn-sm comment-delete" data-id="' + escapeHtml(c.id) + '">삭제</button>' +
+              (canDelete
+                ? '<button type="button" class="btn btn-ghost btn-sm comment-delete" data-id="' + escapeHtml(c.id) + '">삭제</button>'
+                : "") +
             "</div>" +
             '<div class="comment-body">' + escapeHtml(c.content) + "</div>" +
           "</div>";
@@ -195,16 +208,29 @@
     }
   }
 
+  /**
+   * 댓글 작성 폼: 미로그인 시 로그인 안내로 대체
+   */
+  function setupCommentForm() {
+    if (getProfile()) return;
+    var next = encodeURIComponent(window.location.pathname + window.location.search);
+    var noticeEl = document.createElement("p");
+    noticeEl.className = "comment-login-notice";
+    noticeEl.innerHTML =
+      '댓글을 작성하려면 <a href="login.html?next=' + escapeHtml(next) + '">로그인</a>이 필요합니다.';
+    commentForm.replaceWith(noticeEl);
+  }
+
   commentListEl.addEventListener("click", async function (e) {
     var btn = e.target.closest(".comment-delete");
     if (!btn) return;
 
-    var pw = await promptPassword("댓글 비밀번호 (또는 글 비밀번호)");
-    if (pw === null) return;
+    var ok = await confirmDialog("정말 삭제하시겠습니까?");
+    if (!ok) return;
 
     setBusy(btn, true);
     try {
-      var res = await sb.rpc("delete_item_comment", { p_id: btn.dataset.id, p_password: pw });
+      var res = await sb.rpc("delete_item_comment", { p_id: btn.dataset.id });
       if (res.error) throw res.error;
       showToast("댓글이 삭제되었습니다.", "success");
       await loadComments();
@@ -217,23 +243,10 @@
   commentForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    var author = commentAuthor.value.trim();
     var content = commentContent.value.trim();
-    var pw = commentPassword.value.trim();
-
-    if (!author) {
-      showToast("이름을 입력해주세요.", "error");
-      commentAuthor.focus();
-      return;
-    }
     if (!content) {
       showToast("내용을 입력해주세요.", "error");
       commentContent.focus();
-      return;
-    }
-    if (pw && !/^\d{4}$/.test(pw)) {
-      showToast("비밀번호는 숫자 4자리여야 합니다.", "error");
-      commentPassword.focus();
       return;
     }
 
@@ -241,13 +254,10 @@
     try {
       var res = await sb.rpc("add_item_comment", {
         p_item_id: itemId,
-        p_author_name: author,
-        p_content: content,
-        p_password: pw || null
+        p_content: content
       });
       if (res.error) throw res.error;
       commentContent.value = "";
-      commentPassword.value = "";
       await loadComments();
     } catch (err) {
       showToast(mapRpcError(err), "error");
