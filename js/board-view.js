@@ -74,6 +74,33 @@
       messageBtnHtml = ' <button type="button" id="message-author-btn" class="btn btn-ghost btn-sm">쪽지 보내기</button>';
     }
 
+    // 신고 버튼 — 작성자 본인이 아닌 경우 노출 (미로그인 시 클릭하면 로그인 유도)
+    var reportBtnHtml = "";
+    if (!post.is_mine) {
+      reportBtnHtml = ' <button type="button" id="report-post-btn" class="btn btn-ghost btn-sm">🚩 신고</button>';
+    }
+
+    // 이미지 갤러리 (메인 + 썸네일)
+    var paths = post.image_paths || [];
+    var galleryHtml = "";
+    if (paths.length > 0) {
+      galleryHtml =
+        '<div class="post-gallery">' +
+          '<img id="gallery-main" class="gallery-main" src="' +
+            escapeHtml(publicUrl(paths[0])) + '" alt="첨부 이미지">';
+      if (paths.length > 1) {
+        galleryHtml += '<div class="gallery-thumbs" id="gallery-thumbs">';
+        paths.forEach(function (p, i) {
+          galleryHtml +=
+            '<img src="' + escapeHtml(publicUrl(p)) + '" data-index="' + i + '"' +
+            (i === 0 ? ' class="is-active"' : "") +
+            ' alt="첨부 이미지 ' + (i + 1) + '" loading="lazy">';
+        });
+        galleryHtml += "</div>";
+      }
+      galleryHtml += "</div>";
+    }
+
     postContainer.innerHTML =
       '<article class="post-view">' +
         '<h1 class="post-title">' + escapeHtml(post.title) + "</h1>" +
@@ -83,8 +110,10 @@
           "조회 " + viewCount + " · " +
           "댓글 " + commentCount +
           messageBtnHtml +
+          reportBtnHtml +
         "</div>" +
         '<div class="post-content">' + escapeHtml(post.content) + "</div>" +
+        galleryHtml +
         '<div class="post-like-wrap">' +
           '<button type="button" id="like-btn" class="post-like-btn' +
             (post.liked_by_me ? " is-liked" : "") + '" aria-pressed="' +
@@ -115,6 +144,102 @@
         openMessageModal({ postId: postId, title: post.title });
       });
     }
+
+    var reportBtn = document.getElementById("report-post-btn");
+    if (reportBtn) {
+      reportBtn.addEventListener("click", function () {
+        if (!getProfile()) {
+          var next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = "login.html?next=" + next;
+          return;
+        }
+        openReportModal("post", postId);
+      });
+    }
+
+    // 갤러리 썸네일 클릭 → 메인 이미지 교체
+    var thumbsEl = document.getElementById("gallery-thumbs");
+    var mainImg = document.getElementById("gallery-main");
+    if (thumbsEl && mainImg) {
+      thumbsEl.addEventListener("click", function (e) {
+        var t = e.target.closest("img[data-index]");
+        if (!t) return;
+        mainImg.src = t.src;
+        thumbsEl.querySelectorAll("img").forEach(function (img) {
+          img.classList.toggle("is-active", img === t);
+        });
+      });
+    }
+  }
+
+  /**
+   * 신고 모달 — 사유 선택 + 선택적 상세 내용
+   * @param {string} targetType 'post' | 'post_comment'
+   * @param {string} targetId
+   */
+  function openReportModal(targetType, targetId) {
+    var backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop";
+    backdrop.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h3 class="modal-title">신고하기</h3>' +
+        '<div class="report-field">' +
+          '<label for="report-reason">신고 사유</label>' +
+          '<select id="report-reason">' +
+            '<option value="스팸">스팸</option>' +
+            '<option value="욕설">욕설</option>' +
+            '<option value="부적절한 내용">부적절한 내용</option>' +
+            '<option value="기타">기타</option>' +
+          "</select>" +
+        "</div>" +
+        '<div class="report-field">' +
+          '<label for="report-note">상세 내용 (선택)</label>' +
+          '<textarea id="report-note" rows="3" maxlength="500" placeholder="추가 설명을 입력해주세요"></textarea>' +
+        "</div>" +
+        '<div class="modal-actions">' +
+          '<button type="button" class="btn btn-ghost modal-cancel">취소</button>' +
+          '<button type="button" class="btn btn-primary modal-ok">신고</button>' +
+        "</div>" +
+      "</div>";
+    document.body.appendChild(backdrop);
+
+    var reasonSel = backdrop.querySelector("#report-reason");
+    var noteEl = backdrop.querySelector("#report-note");
+    var okBtn = backdrop.querySelector(".modal-ok");
+
+    function close() {
+      document.removeEventListener("keydown", onKeydown);
+      backdrop.remove();
+    }
+    function onKeydown(e) {
+      if (e.key === "Escape") close();
+    }
+
+    okBtn.addEventListener("click", function () {
+      var reason = reasonSel.value;
+      var note = noteEl.value.trim();
+      setBusy(okBtn, true);
+      sb.rpc("create_report", {
+        p_target_type: targetType,
+        p_target_id: targetId,
+        p_reason: reason,
+        p_note: note || null
+      }).then(function (res) {
+        if (res.error) {
+          setBusy(okBtn, false);
+          showToast(mapRpcError(res.error), "error");
+          return;
+        }
+        close();
+        showToast("신고가 접수되었습니다.", "success");
+      });
+    });
+    backdrop.querySelector(".modal-cancel").addEventListener("click", close);
+    backdrop.addEventListener("click", function (e) {
+      if (e.target === backdrop) close();
+    });
+    document.addEventListener("keydown", onKeydown);
+    reasonSel.focus();
   }
 
   function onLikeToggle() {
@@ -178,11 +303,17 @@
     var html = "";
     rows.forEach(function (c) {
       var canDelete = c.is_mine || isAdmin();
+      // 본인 댓글이 아니면 신고 링크 노출 (미로그인 시 클릭하면 로그인 유도)
+      var reportLink = !c.is_mine
+        ? '<button type="button" class="comment-report" data-id="' +
+            escapeHtml(c.id) + '" title="신고" aria-label="댓글 신고">🚩</button>'
+        : "";
       html +=
         '<div class="comment-item">' +
           '<div class="comment-meta">' +
             '<span class="comment-author">' + escapeHtml(c.author_display) + "</span>" +
             '<span class="comment-date">' + formatDate(c.created_at) + "</span>" +
+            reportLink +
             (canDelete
               ? '<button type="button" class="btn btn-ghost btn-sm comment-delete" data-id="' +
                 escapeHtml(c.id) + '">삭제</button>'
@@ -211,6 +342,17 @@
   }
 
   commentList.addEventListener("click", function (e) {
+    var reportBtn = e.target.closest(".comment-report");
+    if (reportBtn) {
+      if (!getProfile()) {
+        var next = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = "login.html?next=" + next;
+        return;
+      }
+      openReportModal("post_comment", reportBtn.dataset.id);
+      return;
+    }
+
     var btn = e.target.closest(".comment-delete");
     if (!btn) return;
     var commentId = btn.dataset.id;
@@ -269,7 +411,7 @@
 
   function loadPost() {
     sb.from("posts_view")
-      .select("id, title, content, author_display, is_anonymous, created_at, updated_at, comment_count, is_mine, like_count, view_count, liked_by_me")
+      .select("id, title, content, author_display, is_anonymous, created_at, updated_at, comment_count, is_mine, like_count, view_count, liked_by_me, image_paths")
       .eq("id", postId)
       .maybeSingle()
       .then(function (res) {

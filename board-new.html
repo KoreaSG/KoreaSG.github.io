@@ -48,6 +48,43 @@
       height: 16px;
       accent-color: var(--primary);
     }
+    .img-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .img-preview {
+      position: relative;
+      width: 88px;
+      height: 88px;
+    }
+    .img-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .img-remove {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .upload-progress {
+      font-size: 13px;
+      color: var(--primary);
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -65,8 +102,23 @@
       </div>
 
       <div class="form-group">
+        <label for="post-community">주제</label>
+        <select id="post-community" required>
+          <option value="">불러오는 중…</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label for="post-content">내용</label>
         <textarea id="post-content" rows="12" maxlength="20000" required placeholder="내용을 입력해주세요"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="image-input">사진</label>
+        <input type="file" id="image-input" accept="image/*" multiple>
+        <div class="form-hint">최대 8장까지 등록할 수 있습니다.</div>
+        <div id="img-previews" class="img-previews"></div>
+        <div id="upload-progress" class="upload-progress" hidden></div>
       </div>
 
       <div class="form-group">
@@ -93,6 +145,7 @@
   <script src="js/db.js"></script>
   <script src="js/util.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/upload.js"></script>
   <script src="js/board-form.js"></script>
 </body>
 </html>

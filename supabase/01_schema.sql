@@ -229,6 +229,35 @@ create table if not exists public.post_likes (
 alter table public.posts add column if not exists view_count integer not null default 0;
 alter table public.items add column if not exists view_count integer not null default 0;
 
+-- ---------- v4 forward-compat (owned by 06_v4.sql) ----------
+-- posts_view / items_view below reference the communities table, the
+-- item_likes table, and the community_id / image_paths / location columns,
+-- which 06_v4.sql creates — but this file re-runs BEFORE 06 on the live
+-- database, so ensure they exist first (identical idempotent DDL; 06
+-- re-running it is a no-op).
+
+create table if not exists public.communities (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique not null check (slug ~ '^[a-z0-9-]{2,30}$'),
+  name        text not null check (char_length(name) between 1 and 30),
+  description text not null default '',
+  sort_order  int not null default 100,
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.posts add column if not exists community_id uuid references public.communities(id);
+alter table public.posts add column if not exists image_paths text[] not null default '{}'
+  check (array_length(image_paths, 1) is null or array_length(image_paths, 1) <= 8);
+alter table public.items add column if not exists location text;
+
+create table if not exists public.item_likes (
+  item_id    uuid not null references public.items(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (item_id, user_id)
+);
+
 -- ---------- views ----------
 -- Views run as owner (security_invoker = off, the default) so they can
 -- read the RLS-locked tables, but auth.uid() still reads the request
@@ -246,10 +275,20 @@ select
   i.description,
   i.image_paths,
   i.status,
+  i.location,
   i.view_count,
   i.created_at,
   i.updated_at,
   (select count(*) from public.item_comments c where c.item_id = i.id) as comment_count,
+  (select count(*) from public.item_likes il where il.item_id = i.id) as like_count,
+  (
+    (select count(*) from public.item_comments c where c.item_id = i.id)
+    + (select count(*) from public.item_likes il where il.item_id = i.id)
+  ) as popularity,
+  (auth.uid() is not null and exists (
+    select 1 from public.item_likes il
+     where il.item_id = i.id and il.user_id = auth.uid()
+  )) as liked_by_me_item,
   pr.username as seller_username,
   pr.region   as seller_region,
   (auth.uid() is not null and auth.uid() = i.user_id) as is_mine
@@ -277,6 +316,10 @@ select
     when p.is_anonymous then '익명'
     else coalesce(pr.username, p.author_name, '익명')
   end as author_display,
+  p.community_id,
+  co.name as community_name,
+  p.image_paths,
+  (coalesce(array_length(p.image_paths, 1), 0) > 0) as has_image,
   p.created_at,
   p.updated_at,
   (select count(*) from public.post_comments c where c.post_id = p.id) as comment_count,
@@ -291,7 +334,8 @@ select
   )) as liked_by_me,
   (auth.uid() is not null and auth.uid() = p.user_id) as is_mine
 from public.posts p
-left join public.profiles pr on pr.id = p.user_id;
+left join public.profiles pr on pr.id = p.user_id
+left join public.communities co on co.id = p.community_id;
 
 create view public.post_comments_view as
 select

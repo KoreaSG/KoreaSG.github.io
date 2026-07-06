@@ -40,41 +40,15 @@
       word-break: break-word;
       min-height: 120px;
     }
+    .post-gallery {
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
     .post-like-wrap {
       display: flex;
       justify-content: center;
       padding-top: 24px;
-    }
-    .post-like-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 12px 28px;
-      font-size: 16px;
-      font-weight: 700;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--text-sub);
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-    }
-    .post-like-btn:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-    .post-like-btn.is-liked {
-      background: var(--danger);
-      border-color: var(--danger);
-      color: #fff;
-    }
-    .post-like-btn.is-liked:hover {
-      color: #fff;
-      opacity: 0.9;
-    }
-    .post-like-btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
     }
     .post-actions {
       display: flex;
@@ -110,17 +84,6 @@
       width: 16px;
       height: 16px;
       accent-color: var(--primary);
-    }
-    .comment-login-notice {
-      font-size: 14px;
-      color: var(--text-sub);
-    }
-    .comment-login-notice a {
-      color: var(--primary);
-      font-weight: 600;
-    }
-    .comment-login-notice a:hover {
-      text-decoration: underline;
     }
   </style>
 </head>
@@ -165,6 +128,7 @@
   <script src="js/util.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/messages-send.js"></script>
+  <script src="js/upload.js"></script>
   <script src="js/board-view.js"></script>
 </body>
 </html>

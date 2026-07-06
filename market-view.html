@@ -24,30 +24,6 @@
       padding: 24px;
       margin-bottom: 24px;
     }
-    .gallery-main {
-      width: 100%;
-      max-height: 480px;
-      object-fit: contain;
-      background: #eef0f4;
-      border-radius: 8px;
-    }
-    .gallery-thumbs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .gallery-thumbs img {
-      width: 64px;
-      height: 64px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 2px solid transparent;
-      cursor: pointer;
-    }
-    .gallery-thumbs img.is-active {
-      border-color: var(--primary);
-    }
     .item-title {
       font-size: 20px;
       margin-top: 16px;
@@ -85,14 +61,20 @@
     .comment-item .comment-meta .btn {
       margin-left: auto;
     }
-    .comment-login-notice {
-      font-size: 14px;
-      color: var(--text-sub);
-      padding: 12px 0;
+    /* --- 소유자 상태 변경 세그먼트 (레이아웃만; 시각 스타일은 common.css .status-seg 공용) --- */
+    .status-control {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
     }
-    .comment-login-notice a {
-      color: var(--primary);
-      font-weight: 600;
+    /* --- 좋아요/신고 버튼 줄 (레이아웃만; 버튼 시각 스타일은 common.css 공용) --- */
+    .item-like-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
     }
   </style>
 </head>

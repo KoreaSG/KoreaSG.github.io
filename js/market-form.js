@@ -16,6 +16,7 @@
   var progressEl = document.getElementById("upload-progress");
   var titleInput = document.getElementById("title-input");
   var categorySelect = document.getElementById("category-select");
+  var locationSelect = document.getElementById("location-select");
   var priceInput = document.getElementById("price-input");
   var descInput = document.getElementById("desc-input");
   var statusGroup = document.getElementById("status-group");
@@ -41,6 +42,14 @@
     opt.value = c;
     opt.textContent = c;
     categorySelect.appendChild(opt);
+  });
+
+  // 거래지역 옵션 채우기
+  REGIONS.forEach(function (r) {
+    var opt = document.createElement("option");
+    opt.value = r;
+    opt.textContent = r;
+    locationSelect.appendChild(opt);
   });
 
   if (isEdit) {
@@ -127,6 +136,7 @@
   function readFields() {
     var title = titleInput.value.trim();
     var category = categorySelect.value;
+    var location = locationSelect.value;
     var price = Math.floor(Number(priceInput.value));
     var description = descInput.value.trim();
 
@@ -140,6 +150,11 @@
       categorySelect.focus();
       return null;
     }
+    if (!location || REGIONS.indexOf(location) === -1) {
+      showToast("거래지역을 선택해주세요.", "error");
+      locationSelect.focus();
+      return null;
+    }
     if (isNaN(price) || price < 0 || price > 1000000) {
       showToast("가격은 0~1,000,000 사이 숫자여야 합니다.", "error");
       priceInput.focus();
@@ -150,7 +165,7 @@
       descInput.focus();
       return null;
     }
-    return { title: title, category: category, price: price, description: description };
+    return { title: title, category: category, location: location, price: price, description: description };
   }
 
   async function submitCreate() {
@@ -172,6 +187,7 @@
         p_category: fields.category,
         p_price: fields.price,
         p_description: fields.description,
+        p_location: fields.location,
         p_image_paths: uploaded
       });
       if (res.error) {
@@ -216,7 +232,8 @@
         p_price: fields.price,
         p_description: fields.description,
         p_image_paths: finalPaths,
-        p_status: statusSelect.value
+        p_status: statusSelect.value,
+        p_location: fields.location
       });
       if (res.error) {
         await removeImages(uploaded);
@@ -260,6 +277,7 @@
 
       titleInput.value = item.title || "";
       categorySelect.value = item.category || "";
+      if (item.location && REGIONS.indexOf(item.location) !== -1) locationSelect.value = item.location;
       priceInput.value = item.price != null ? item.price : "";
       descInput.value = item.description || "";
       if (ITEM_STATUS[item.status]) statusSelect.value = item.status;

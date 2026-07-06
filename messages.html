@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>쪽지함 | 싱가포르 한인 커뮤니티 KoreaSG</title>
-  <meta name="description" content="싱가포르 한인 커뮤니티 KoreaSG 쪽지함. 교민들과 주고받은 쪽지를 확인하세요.">
+  <meta name="description" content="싱가포르 한인 커뮤니티 KoreaSG 쪽지함. 교민들과 주고받은 쪽지를 대화형으로 확인하세요.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://koreasg.github.io/messages.html">
   <meta property="og:title" content="쪽지함 | 싱가포르 한인 커뮤니티 KoreaSG">
-  <meta property="og:description" content="싱가포르 한인 커뮤니티 KoreaSG 쪽지함. 교민들과 주고받은 쪽지를 확인하세요.">
+  <meta property="og:description" content="싱가포르 한인 커뮤니티 KoreaSG 쪽지함. 교민들과 주고받은 쪽지를 대화형으로 확인하세요.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://koreasg.github.io/messages.html">
   <meta property="og:site_name" content="싱가포르 한인 커뮤니티 KoreaSG">
@@ -16,6 +16,327 @@
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <style>
+    /* ===== 쪽지함(채팅형) 페이지 전용 스타일 ===== */
+    .msg-chat {
+      display: flex;
+      gap: 16px;
+      height: calc(100vh - 200px);
+      min-height: 480px;
+      margin-top: 8px;
+    }
+
+    /* --- 대화 목록 (좌측) --- */
+    .msg-conv-list {
+      flex: 0 0 320px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .msg-conv-list-head {
+      flex: 0 0 auto;
+      padding: 16px 18px;
+      font-weight: 700;
+      font-size: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .msg-conv-scroll {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .msg-conv-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      padding: 14px 18px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    .msg-conv-item { position: relative; transition: background 0.12s; }
+    .msg-conv-item:hover { background: var(--bg-soft); }
+    .msg-conv-item.is-active { background: var(--primary-tint); }
+    .msg-conv-item.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--primary);
+    }
+    .msg-conv-avatar {
+      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-pill);
+      background: var(--primary-tint-2);
+      color: var(--primary-ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      text-transform: uppercase;
+      transition: box-shadow 0.12s;
+    }
+    .msg-conv-item.is-active .msg-conv-avatar {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--primary);
+    }
+    .msg-conv-main { flex: 1 1 auto; min-width: 0; }
+    .msg-conv-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .msg-conv-name {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-conv-time {
+      margin-left: auto;
+      flex: 0 0 auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .msg-conv-preview {
+      margin-top: 3px;
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-conv-unread {
+      flex: 0 0 auto;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: var(--radius-pill);
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- 대화 스레드 (우측/메인) --- */
+    .msg-thread {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .msg-thread-empty {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 15px;
+      padding: 24px;
+      text-align: center;
+    }
+    /* JS는 [hidden] 속성으로 토글하는데, 위 규칙의 display:flex가 클래스 선택자라서
+       UA의 [hidden]{display:none}과 명시도가 같아 순서상 이 규칙이 이겨버린다.
+       실제 대화가 열려도 안내 문구가 사라지지 않는 버그 방지용 오버라이드. */
+    .msg-thread-empty[hidden] {
+      display: none;
+    }
+
+    .msg-thread-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .msg-back-btn {
+      display: none;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 0;
+      background: transparent;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      transition: background 0.12s;
+    }
+    .msg-back-btn:hover { background: var(--bg-soft); }
+    .msg-thread-title {
+      font-weight: 700;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .msg-block-btn { margin-left: auto; flex: 0 0 auto; }
+
+    .msg-thread-body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: var(--bg);
+    }
+
+    .msg-bubble-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 78%;
+      margin-bottom: 8px;
+    }
+    .msg-bubble-row.out { align-self: flex-end; align-items: flex-end; }
+    .msg-bubble-row.in { align-self: flex-start; align-items: flex-start; }
+
+    .msg-bubble {
+      position: relative;
+      padding: 10px 14px;
+      border-radius: 17px;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg-bubble-row.out .msg-bubble {
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 5px;
+      box-shadow: 0 2px 6px rgba(255, 111, 15, 0.22);
+    }
+    .msg-bubble-row.in .msg-bubble {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 5px;
+      box-shadow: var(--shadow);
+    }
+    .msg-bubble-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .msg-bubble-ctx {
+      margin-bottom: 5px;
+      max-width: 100%;
+    }
+    .msg-bubble-del {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 4px;
+      opacity: 0;
+      transition: opacity .12s, color .12s;
+    }
+    .msg-bubble-del:hover { color: var(--danger); }
+    .msg-bubble-row:hover .msg-bubble-del { opacity: 1; }
+    /* 터치 기기(호버 불가)에서는 항상 노출 — 그렇지 않으면 삭제 버튼에 손댈 수 없음 */
+    @media (hover: none) {
+      .msg-bubble-del { opacity: 0.6; }
+    }
+
+    /* --- 입력 영역 --- */
+    .msg-thread-input {
+      flex: 0 0 auto;
+      border-top: 1px solid var(--border);
+      padding: 10px 12px;
+      background: var(--bg-card);
+    }
+    .msg-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .msg-input-field {
+      flex: 1 1 auto;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 11px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      font: inherit;
+      font-size: 14px;
+      line-height: 1.4;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .msg-input-field:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .msg-input-send {
+      flex: 0 0 auto;
+      border-radius: var(--radius-lg);
+      min-height: 44px;
+    }
+    .msg-input-note {
+      text-align: center;
+      padding: 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: var(--bg-soft);
+      border-radius: var(--radius-sm);
+      margin: 2px;
+    }
+
+    /* 대화 전환 시 스레드 페이드인 */
+    .msg-thread-active {
+      animation: msgThreadIn 0.16s ease;
+    }
+    @keyframes msgThreadIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* --- 반응형 (모바일 ≤768px) --- */
+    @media (max-width: 768px) {
+      .msg-chat {
+        height: calc(100vh - 150px);
+        gap: 0;
+      }
+      .msg-conv-list { flex: 1 1 auto; }
+      .msg-thread { display: none; }
+      /* 대화 선택 시: 목록 숨기고 스레드 전체화면 */
+      .msg-chat.thread-open .msg-conv-list { display: none; }
+      .msg-chat.thread-open .msg-thread { display: flex; }
+      .msg-back-btn { display: flex; }
+      .msg-bubble-row { max-width: 85%; }
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
@@ -23,15 +344,18 @@
   <main class="container">
     <div id="messages-notice" class="notice-box" hidden></div>
 
-    <h1 class="msg-page-title">쪽지함</h1>
+    <div class="msg-chat" id="msg-chat">
+      <aside class="msg-conv-list">
+        <div class="msg-conv-list-head">쪽지함</div>
+        <div class="msg-conv-scroll" id="conv-items">
+          <div class="empty-state">불러오는 중…</div>
+        </div>
+      </aside>
 
-    <div class="msg-tabs" role="tablist">
-      <button type="button" class="msg-tab is-active" id="tab-in" role="tab" aria-selected="true">받은쪽지</button>
-      <button type="button" class="msg-tab" id="tab-out" role="tab" aria-selected="false">보낸쪽지</button>
-    </div>
-
-    <div class="msg-list-card">
-      <div id="msg-list"><div class="empty-state">불러오는 중…</div></div>
+      <section class="msg-thread" id="thread">
+        <div class="msg-thread-empty" id="thread-empty">대화를 선택하세요</div>
+        <!-- 활성 스레드는 JS가 렌더링 -->
+      </section>
     </div>
   </main>
 

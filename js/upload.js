@@ -58,13 +58,14 @@ function compressImage(file) {
 
 /**
  * 이미지 여러 장 압축 후 Storage 업로드.
- * 경로: items/${uuid}/${index}.webp (bucket: item-images)
+ * 경로: ${prefix}/${uuid}/${index}.webp (bucket: item-images)
  * @param {FileList|File[]} fileList 최대 8장
  * @param {function=} onProgress (done, total) 콜백
+ * @param {string=} prefix 경로 접두사 (기본 'items'; 커뮤니티 글은 'posts')
  * @returns {Promise<string[]>} 업로드된 storage 경로 배열
  * @throws 실패 시 이미 업로드된 파일을 정리한 뒤 에러를 던짐
  */
-async function uploadImages(fileList, onProgress) {
+async function uploadImages(fileList, onProgress, prefix) {
   var files = Array.prototype.slice.call(fileList || []);
   if (files.length === 0) return [];
   if (files.length > 8) {
@@ -74,13 +75,14 @@ async function uploadImages(fileList, onProgress) {
     throw new Error("서비스가 아직 설정되지 않았습니다.");
   }
 
+  var dir = prefix || "items";
   var groupId = crypto.randomUUID();
   var uploaded = [];
 
   try {
     for (var i = 0; i < files.length; i++) {
       var result = await compressImage(files[i]);
-      var path = "items/" + groupId + "/" + i + ".webp";
+      var path = dir + "/" + groupId + "/" + i + ".webp";
 
       var res = await sb.storage
         .from(STORAGE_BUCKET)

@@ -303,3 +303,65 @@ function renderHeader(active) {
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
   });
 }
+
+/**
+ * 오늘 날짜 키 (Asia/Singapore 기준 YYYY-MM-DD)
+ */
+function _todayKeySG() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Singapore",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
+/**
+ * 방문자 통계 푸터 렌더링 (전 페이지 공용)
+ * - record_visit(): 브라우저 세션당 하루 1회만 호출 (sessionStorage 가드), 실패해도 무시
+ * - visit_stats(): {total, today} → "누적 방문 N · 오늘 N"
+ * - #visitor-stats 요소가 있으면 채우고, 없으면 <body> 하단에 작은 바를 추가
+ */
+function renderVisitorStats() {
+  if (!APP_CONFIGURED || !sb) return;
+
+  var slot = document.getElementById("visitor-stats");
+  if (!slot) {
+    slot = document.createElement("div");
+    slot.id = "visitor-stats";
+    slot.className = "visitor-stats";
+    document.body.appendChild(slot);
+  }
+
+  function paint(stats) {
+    if (!stats) return;
+    var total = Number(stats.total) || 0;
+    var today = Number(stats.today) || 0;
+    slot.innerHTML =
+      "누적 방문 <b>" + escapeHtml(total.toLocaleString()) + "</b> · " +
+      "오늘 <b>" + escapeHtml(today.toLocaleString()) + "</b>";
+  }
+
+  function loadStats() {
+    sb.rpc("visit_stats").then(function (res) {
+      if (res.error) return;
+      paint(res.data);
+    });
+  }
+
+  var key = "visited_" + _todayKeySG();
+  var visited = false;
+  try {
+    visited = sessionStorage.getItem(key) === "1";
+  } catch (e) {}
+
+  if (!visited) {
+    try {
+      sessionStorage.setItem(key, "1");
+    } catch (e) {}
+    // record_visit 은 절대 에러를 던지지 않지만, 실패해도 통계는 표시
+    sb.rpc("record_visit").then(loadStats, loadStats);
+  } else {
+    loadStats();
+  }
+}

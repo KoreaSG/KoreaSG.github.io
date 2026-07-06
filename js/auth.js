@@ -79,7 +79,11 @@ function _renderAccountArea() {
 
   var profile = getProfile();
   if (profile) {
+    var adminLink = profile.is_admin
+      ? '<a class="nav-link nav-admin-link" href="admin.html">관리</a>'
+      : "";
     slot.innerHTML =
+      adminLink +
       '<a class="nav-link nav-msg-link" href="messages.html">쪽지 <span class="msg-badge" hidden></span></a>' +
       '<span class="nav-user"><b>' + escapeHtml(profile.username) + "</b>님</span>" +
       '<button type="button" class="nav-logout-btn">로그아웃</button>';
@@ -105,11 +109,13 @@ function _renderAccountArea() {
 async function initAuth() {
   if (!APP_CONFIGURED || !sb) {
     _renderAccountArea();
+    renderVisitorStats();
     return null;
   }
 
   var profile = await _loadProfile();
   _renderAccountArea();
+  renderVisitorStats();
 
   if (!_authSubscribed) {
     _authSubscribed = true;
