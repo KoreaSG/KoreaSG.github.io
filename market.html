@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>중고거래 - KoreaSG</title>
+  <meta name="description" content="싱가포르 한인 중고거래 매물 목록">
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <div id="market-notice" class="notice-box" hidden></div>
+
+    <form id="search-form" class="search-bar">
+      <input type="search" id="search-input" placeholder="검색어를 입력하세요" maxlength="100">
+      <button type="submit" class="btn">검색</button>
+      <a class="btn btn-primary" href="market-new.html">판매하기</a>
+    </form>
+
+    <div id="category-chips" class="category-chips"></div>
+
+    <div id="item-grid"><div class="empty-state">불러오는 중…</div></div>
+
+    <div id="pagination"></div>
+  </main>
+
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/market-list.js"></script>
+</body>
+</html>

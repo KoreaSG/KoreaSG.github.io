@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>매물 상세 - KoreaSG</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .item-detail,
+    .comments-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .gallery-main {
+      width: 100%;
+      max-height: 480px;
+      object-fit: contain;
+      background: #eef0f4;
+      border-radius: 8px;
+    }
+    .gallery-thumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .gallery-thumbs img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .gallery-thumbs img.is-active {
+      border-color: var(--primary);
+    }
+    .item-title {
+      font-size: 20px;
+      margin-top: 16px;
+      word-break: break-word;
+    }
+    .item-price {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+    .item-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .item-desc {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .item-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .comments-section h2 {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+    .comment-form-grid {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .comment-form-grid input {
+      flex: 1;
+    }
+    .comment-item .comment-meta .btn {
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <div id="market-notice" class="notice-box" hidden></div>
+
+    <div id="item-container"><div class="empty-state">불러오는 중…</div></div>
+
+    <section id="comments-section" class="comments-section" hidden>
+      <h2 id="comments-heading">댓글 0</h2>
+      <div id="comment-list"></div>
+
+      <form id="comment-form">
+        <div class="comment-form-grid">
+          <input type="text" id="comment-author" maxlength="30" required placeholder="이름">
+          <input type="password" id="comment-password" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" placeholder="비밀번호 (선택)">
+        </div>
+        <div class="form-group">
+          <textarea id="comment-content" maxlength="1000" required placeholder="댓글을 입력하세요" style="min-height:80px"></textarea>
+          <div class="form-hint">비밀번호 미입력 시 글 작성자만 삭제 가능합니다.</div>
+        </div>
+        <div style="text-align:right">
+          <button type="submit" id="comment-submit" class="btn btn-primary btn-sm">등록</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/market-view.js"></script>
+</body>
+</html>

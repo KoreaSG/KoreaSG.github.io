@@ -1,0 +1,6 @@
+.claude/
+.omc/
+tasks/
+node_modules/
+.env*
+*.log

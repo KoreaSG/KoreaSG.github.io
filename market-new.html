@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>판매 글쓰기 - KoreaSG</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .page-title {
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .img-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .img-preview {
+      position: relative;
+      width: 88px;
+      height: 88px;
+    }
+    .img-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .img-remove {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .upload-progress {
+      font-size: 13px;
+      color: var(--primary);
+      margin-top: 6px;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <div id="market-notice" class="notice-box" hidden></div>
+
+    <h1 id="page-title" class="page-title">상품 등록</h1>
+
+    <form id="item-form" class="form-card" hidden>
+      <div class="form-group">
+        <label for="image-input">사진</label>
+        <input type="file" id="image-input" accept="image/*" multiple>
+        <div class="form-hint">최대 8장까지 등록할 수 있습니다.</div>
+        <div id="img-previews" class="img-previews"></div>
+        <div id="upload-progress" class="upload-progress" hidden></div>
+      </div>
+
+      <div class="form-group">
+        <label for="title-input">제목</label>
+        <input type="text" id="title-input" maxlength="100" required placeholder="상품 제목">
+      </div>
+
+      <div class="form-group">
+        <label for="category-select">분류</label>
+        <select id="category-select" required>
+          <option value="">분류를 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="price-input">가격 (S$)</label>
+        <input type="number" id="price-input" min="0" max="1000000" step="1" required placeholder="0">
+        <div class="form-hint">0 입력 시 무료나눔</div>
+      </div>
+
+      <div class="form-group">
+        <label for="desc-input">내용</label>
+        <textarea id="desc-input" maxlength="5000" required placeholder="상품 설명을 입력하세요"></textarea>
+      </div>
+
+      <div class="form-group" id="status-group" hidden>
+        <label for="status-select">상태</label>
+        <select id="status-select">
+          <option value="selling">판매중</option>
+          <option value="reserved">예약중</option>
+          <option value="sold">판매완료</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="password-group">
+        <label for="password-input">비밀번호</label>
+        <input type="password" id="password-input" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" placeholder="숫자 4자리">
+        <div class="form-hint">수정/삭제 시 필요합니다.</div>
+      </div>
+
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="market.html">취소</a>
+        <button type="submit" id="submit-btn" class="btn btn-primary">등록하기</button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/market-form.js"></script>
+</body>
+</html>

@@ -1,171 +1,57 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>싱가포르 한인 커뮤니티 - SG Korean Community</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>싱가포르 한인 커뮤니티 - KoreaSG</title>
+  <meta name="description" content="싱가포르 한인들을 위한 중고거래·커뮤니티 사이트">
+  <link rel="stylesheet" href="css/common.css">
 </head>
 <body>
-    <!-- 헤더 -->
-    <header>
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">🦁</div>
-                <span>SG한인커뮤니티</span>
-            </div>
-            <nav>
-                <ul id="navMenu">
-                    <li><a href="#home">홈</a></li>
-                    <li><a href="#marketplace">중고마켓</a></li>
-                    <li><a href="#parenting">육아커뮤니티</a></li>
-                    <li><a href="#general">일반소통</a></li>
-                    <li><a href="#contact">문의하기</a></li>
-                </ul>
-            </nav>
-            <div class="mobile-menu-toggle" onclick="toggleMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    </header>
+  <div id="site-header"></div>
 
-    <!-- 히어로 섹션 -->
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <h1>싱가포르 한인들의 따뜻한 만남의 장</h1>
-            <p>중고거래, 육아정보, 일상소통까지 한 곳에서 해결하세요!</p>
-        </div>
-    </section>
+  <section class="hero">
+    <h1>싱가포르 한인 커뮤니티</h1>
+    <p>싱가포르 한인들의 중고거래와 소통을 위한 공간입니다.</p>
+  </section>
 
-    <!-- 카테고리 섹션 -->
-    <section class="categories">
-        <div class="container">
-            <h2 class="section-title">우리 커뮤니티의 주요 서비스</h2>
-            <div class="category-grid">
-                <!-- 중고마켓 -->
-                <div class="category-card fade-in category-card-button" id="marketplace">
-                    <div class="category-icon">🛒</div>
-                    <h3>중고마켓</h3>
-                    <p>싱가포르 한인들 간의 안전하고 신뢰할 수 있는 중고거래 플랫폼</p>
-                </div>
+  <main class="container">
+    <div id="home-notice" class="notice-box" hidden></div>
 
-                <!-- 육아 커뮤니티 -->
-                <div class="category-card fade-in category-card-button" id="parenting">
-                    <div class="category-icon">👶</div>
-                    <h3>영유아 소통 커뮤니티</h3>
-                    <p>싱가포르에서 아이 키우는 부모님들의 정보 공유 공간</p>
-                </div>
+    <div class="link-cards">
+      <a class="link-card" href="market.html">
+        <span class="link-card-icon">🛒</span>
+        중고거래
+        <span class="link-card-desc">싱가포르 한인들과 안전하게 사고팔기</span>
+      </a>
+      <a class="link-card" href="board.html">
+        <span class="link-card-icon">💬</span>
+        커뮤니티
+        <span class="link-card-desc">생활 정보 나누고 자유롭게 소통하기</span>
+      </a>
+    </div>
 
-                <!-- 일반 커뮤니티 -->
-                <div class="category-card fade-in category-card-button" id="general">
-                    <div class="category-icon">💬</div>
-                    <h3>일반 소통 커뮤니티</h3>
-                    <p>싱가포르 생활 정보와 일상을 나누는 자유로운 소통 공간</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div class="home-sections">
+      <section class="home-section">
+        <h2>최근 매물 <a class="more-link" href="market.html">더보기 &rsaquo;</a></h2>
+        <div id="recent-items"><div class="empty-state">불러오는 중…</div></div>
+      </section>
+      <section class="home-section">
+        <h2>최근 글 <a class="more-link" href="board.html">더보기 &rsaquo;</a></h2>
+        <div id="recent-posts"><div class="empty-state">불러오는 중…</div></div>
+      </section>
+    </div>
+  </main>
 
-    <!-- 푸터 -->
-    <footer id="contact">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>빠른 링크</h4>
-                <ul>
-                    <li><a href="#general">일반커뮤니티</a></li>
-                    <li><a href="#marketplace">중고마켓</a></li>
-                    <li><a href="#parenting">육아커뮤니티</a></li>
-                    <li><a href="#about">소개</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>고객 지원 안해요</h4>
-                <ul>
-                    <li><a href="#">자주 묻는 질문</a></li>
-                    <li><a href="#">이용약관</a></li>
-                    <li><a href="#">개인정보처리방침</a></li>
-                    <li><a href="#">문의하기</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>연락처 가짜예요</h4>
-                <ul>
-                    <li>📧 sgkorean@example.com</li>
-                    <li>📱 +65 1234 5678</li>
-                    <li>📍 Singapore</li>
-                </ul>
-                <div class="social-links">
-                    <a href="#">📘</a>
-                    <a href="#">📷</a>
-                    <a href="#">💬</a>
-                </div>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; 2023 매버릭스 코리아. All rights reserved.</p>
-        </div>
-    </footer>
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
 
-    <script>
-        // 모바일 메뉴 토글
-        function toggleMenu() {
-            const navMenu = document.getElementById('navMenu');
-            navMenu.classList.toggle('active');
-        }
-
-        // 부드러운 스크롤
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // 스크롤 시 헤더 효과
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            const currentScroll = window.pageYOffset;
-            
-            if (currentScroll > 100) {
-                header.style.background = 'rgba(30, 58, 138, 0.95)';
-                header.style.backdropFilter = 'blur(10px)';
-            } else {
-                header.style.background = '';
-                header.style.backdropFilter = '';
-            }
-            
-            lastScroll = currentScroll;
-        });
-
-        // 카테고리 카드 클릭 이벤트
-        document.querySelectorAll('.category-card-button').forEach(card => {
-            card.addEventListener('click', function() {
-                const category = this.getAttribute('id');
-
-                // 카테고리 이름을 파일명으로 변환해 이동 (예: "Sports" → "sports.html")
-                const filename = category.toLowerCase().replace(/\s+/g, '-') + '.html';
-                window.location.href = filename;
-            });
-        });
-
-        // 페이지 로드 시 애니메이션
-        window.addEventListener('load', () => {
-            document.querySelectorAll('.fade-in').forEach((element, index) => {
-                setTimeout(() => {
-                    element.style.opacity = '1';
-                    element.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        });
-    </script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/home.js"></script>
 </body>
 </html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게시글 - KoreaSG</title>
+  <meta name="description" content="싱가포르 한인 커뮤니티 게시글">
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .post-view {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .post-title {
+      font-size: 22px;
+      line-height: 1.4;
+      word-break: break-word;
+      margin-bottom: 8px;
+    }
+    .post-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .post-content {
+      padding-top: 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px;
+    }
+    .post-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin: 16px 0 32px;
+    }
+    .comments-section h2 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .comments-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px 16px;
+      margin-bottom: 16px;
+    }
+    .comment-meta .comment-delete {
+      margin-left: auto;
+    }
+    #comment-form textarea {
+      min-height: 80px;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <div id="board-notice" class="notice-box" hidden></div>
+
+    <div id="post-container"><div class="empty-state">불러오는 중…</div></div>
+
+    <section class="comments-section" id="comments-section" hidden>
+      <h2>댓글 <span id="comment-count-label">0</span></h2>
+      <div class="comments-card">
+        <div id="comment-list"><div class="empty-state">불러오는 중…</div></div>
+      </div>
+
+      <form id="comment-form">
+        <div class="form-group">
+          <label for="comment-author">이름</label>
+          <input type="text" id="comment-author" maxlength="30" required placeholder="이름을 입력해주세요">
+        </div>
+        <div class="form-group">
+          <label for="comment-content">내용</label>
+          <textarea id="comment-content" rows="3" maxlength="2000" required placeholder="댓글을 입력해주세요"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="comment-password">비밀번호 (선택)</label>
+          <input type="password" id="comment-password" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" placeholder="숫자 4자리">
+          <p class="form-hint">미입력 시 글 작성자만 삭제 가능</p>
+        </div>
+        <button type="submit" class="btn btn-primary" id="comment-submit-btn">댓글 등록</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/board-view.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>커뮤니티 - KoreaSG</title>
+  <meta name="description" content="싱가포르 한인 커뮤니티 게시판">
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="container">
+    <div id="board-notice" class="notice-box" hidden></div>
+
+    <div class="search-bar">
+      <input type="search" id="search-input" placeholder="제목 검색" aria-label="제목 검색">
+      <button type="button" id="search-btn" class="btn">검색</button>
+      <a class="btn btn-primary" href="board-new.html">글쓰기</a>
+    </div>
+
+    <div id="board-list"><div class="empty-state">불러오는 중…</div></div>
+    <div id="board-pagination"></div>
+  </main>
+
+  <footer class="site-footer">
+    KoreaSG — 싱가포르 한인 커뮤니티
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/db.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/board-list.js"></script>
+</body>
+</html>
